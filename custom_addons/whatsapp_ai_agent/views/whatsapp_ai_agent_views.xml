@@ -1,0 +1,274 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ═══════════════════════════════════════════════════════════════════════
+         FORM VIEW - Agente AI
+    ═══════════════════════════════════════════════════════════════════════ -->
+    <record id="view_whatsapp_ai_agent_form" model="ir.ui.view">
+        <field name="name">whatsapp.ai.agent.form</field>
+        <field name="model">whatsapp.ai.agent</field>
+        <field name="arch" type="xml">
+            <form string="Agente AI para WhatsApp">
+                <header>
+                    <button name="action_test_ai_connection"
+                            string="Probar Conexión AI"
+                            type="object"
+                            class="oe_highlight"
+                            invisible="ai_provider == 'odoo_native'"/>
+                    <button name="action_view_sessions"
+                            string="Ver Sesiones"
+                            type="object"/>
+                </header>
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_view_sessions"
+                                type="object"
+                                class="oe_stat_button"
+                                icon="fa-comments">
+                            <div class="o_stat_info">
+                                <field name="active_sessions" class="o_stat_value"/>
+                                <span class="o_stat_text">Activas</span>
+                            </div>
+                        </button>
+                        <button name="action_view_sessions"
+                                type="object"
+                                class="oe_stat_button"
+                                icon="fa-history">
+                            <div class="o_stat_info">
+                                <field name="total_sessions" class="o_stat_value"/>
+                                <span class="o_stat_text">Total Sesiones</span>
+                            </div>
+                        </button>
+                        <button name="action_view_sessions"
+                                type="object"
+                                class="oe_stat_button"
+                                icon="fa-paper-plane">
+                            <div class="o_stat_info">
+                                <field name="total_messages_sent" class="o_stat_value"/>
+                                <span class="o_stat_text">Msgs Enviados</span>
+                            </div>
+                        </button>
+                    </div>
+
+                    <widget name="web_ribbon" title="Archivado" bg_color="text-bg-danger"
+                            invisible="active"/>
+
+                    <div class="oe_title">
+                        <h1>
+                            <field name="name" placeholder="Nombre del Agente AI"/>
+                        </h1>
+                    </div>
+
+                    <group>
+                        <group string="Configuración General">
+                            <field name="whatsapp_account_id"/>
+                            <field name="active"/>
+                            <field name="auto_respond"/>
+                            <field name="company_id" groups="base.group_multi_company"/>
+                        </group>
+                        <group string="Estadísticas">
+                            <field name="total_sessions" readonly="1"/>
+                            <field name="active_sessions" readonly="1"/>
+                            <field name="total_messages_sent" readonly="1"/>
+                        </group>
+                    </group>
+
+                    <notebook>
+
+                        <!-- ── Pestaña: Proveedor AI ── -->
+                        <page string="Proveedor de AI" name="ai_provider">
+                            <group>
+                                <group string="Configuración del Proveedor">
+                                    <field name="ai_provider"/>
+                                    <field name="api_key"
+                                           password="True"
+                                           invisible="ai_provider == 'odoo_native'"/>
+                                    <field name="api_base_url"
+                                           invisible="ai_provider not in ('openai_compatible',)"/>
+                                    <field name="ai_model"
+                                           invisible="ai_provider == 'odoo_native'"/>
+                                </group>
+                                <group string="Parámetros">
+                                    <field name="ai_temperature"
+                                           invisible="ai_provider == 'odoo_native'"
+                                           widget="float"/>
+                                    <field name="ai_max_tokens"
+                                           invisible="ai_provider == 'odoo_native'"/>
+                                    <field name="response_delay_seconds"/>
+                                </group>
+                            </group>
+
+                            <!-- Agente Nativo de Odoo -->
+                            <group string="Agente Nativo Odoo 19"
+                                   invisible="ai_provider != 'odoo_native'">
+                                <field name="odoo_ai_model_name"
+                                       placeholder="ej: discuss.ai.agent"/>
+                                <field name="odoo_ai_agent_res_id"
+                                       placeholder="ID del registro del agente"/>
+                                <div class="alert alert-info" role="alert">
+                                    <strong>Nota:</strong> Ingresa el nombre técnico del modelo
+                                    y el ID del agente AI configurado en tu instancia de Odoo 19.
+                                    El agente debe tener un método como
+                                    <code>process_message</code>, <code>get_response</code> o similar.
+                                </div>
+                            </group>
+
+                            <!-- Ayuda por proveedor -->
+                            <div class="alert alert-info" role="alert"
+                                 invisible="ai_provider != 'openai'">
+                                <strong>OpenAI:</strong> Usa tu API Key de
+                                <a href="https://platform.openai.com/api-keys" target="_blank">
+                                    platform.openai.com
+                                </a>.
+                                Modelos recomendados: <code>gpt-4o</code>, <code>gpt-4o-mini</code>.
+                            </div>
+                            <div class="alert alert-info" role="alert"
+                                 invisible="ai_provider != 'anthropic'">
+                                <strong>Anthropic:</strong> Usa tu API Key de
+                                <a href="https://console.anthropic.com/" target="_blank">
+                                    console.anthropic.com
+                                </a>.
+                                Modelos recomendados:
+                                <code>claude-3-5-sonnet-20241022</code>,
+                                <code>claude-3-haiku-20240307</code>.
+                            </div>
+                            <div class="alert alert-info" role="alert"
+                                 invisible="ai_provider != 'openai_compatible'">
+                                <strong>API Compatible:</strong> Usa cualquier API con formato
+                                OpenAI. Ejemplos: Ollama (<code>http://localhost:11434/v1</code>),
+                                Groq, Together AI, LM Studio, etc.
+                            </div>
+                        </page>
+
+                        <!-- ── Pestaña: Entrenamiento ── -->
+                        <page string="Entrenamiento (Prompt)" name="training">
+                            <group>
+                                <field name="system_prompt"
+                                       nolabel="1"
+                                       placeholder="Describe aquí el rol y conocimientos del agente...&#10;&#10;Ejemplo:&#10;Eres el asistente virtual de [Tu Empresa], especializado en ventas de software.&#10;Tu objetivo es resolver dudas de clientes potenciales y ayudarlos a elegir el producto adecuado.&#10;Siempre responde en español de forma amigable y profesional.&#10;Cuando el cliente muestre interés en comprar, solicita su nombre, email y teléfono.&#10;No menciones a la competencia.&#10;Horario de atención humana: Lunes a Viernes 9:00-18:00."
+                                       widget="html"/>
+                                <field name="max_history_messages"/>
+                            </group>
+                            <div class="alert alert-warning" role="alert">
+                                <strong>Consejos para el Prompt:</strong>
+                                <ul>
+                                    <li>Define claramente el <strong>rol</strong> del agente (vendedor, soporte, informativo).</li>
+                                    <li>Especifica el <strong>idioma</strong> y tono de respuesta.</li>
+                                    <li>Incluye información de tus <strong>productos/servicios</strong> más importantes.</li>
+                                    <li>Define qué debe hacer cuando el cliente quiere <strong>hablar con un humano</strong>.</li>
+                                    <li>Agrega <strong>preguntas frecuentes</strong> y sus respuestas.</li>
+                                    <li>Establece <strong>límites</strong>: qué temas no debe abordar.</li>
+                                </ul>
+                            </div>
+                        </page>
+
+                        <!-- ── Pestaña: Contactos y CRM ── -->
+                        <page string="Contactos y CRM" name="crm">
+                            <group string="Creación de Contactos">
+                                <field name="create_partner"/>
+                                <field name="partner_name_prefix"
+                                       invisible="not create_partner"/>
+                            </group>
+                            <group string="Creación de Leads CRM">
+                                <field name="create_lead"/>
+                                <field name="lead_team_id"
+                                       invisible="not create_lead"/>
+                                <field name="lead_user_id"
+                                       invisible="not create_lead"/>
+                                <field name="lead_priority"
+                                       invisible="not create_lead"/>
+                                <field name="lead_tag_ids"
+                                       invisible="not create_lead"
+                                       widget="many2many_tags"/>
+                            </group>
+                        </page>
+
+                        <!-- ── Pestaña: Respuesta de Error ── -->
+                        <page string="Mensaje de Error" name="fallback">
+                            <group>
+                                <field name="fallback_message"
+                                       nolabel="1"
+                                       placeholder="Mensaje que se envía cuando el AI no puede responder..."
+                                       widget="html"/>
+                            </group>
+                        </page>
+
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <!-- ═══════════════════════════════════════════════════════════════════════
+         LIST VIEW - Agente AI
+    ═══════════════════════════════════════════════════════════════════════ -->
+    <record id="view_whatsapp_ai_agent_list" model="ir.ui.view">
+        <field name="name">whatsapp.ai.agent.list</field>
+        <field name="model">whatsapp.ai.agent</field>
+        <field name="arch" type="xml">
+            <list string="Agentes AI WhatsApp" decoration-muted="not active">
+                <field name="name"/>
+                <field name="whatsapp_account_id"/>
+                <field name="ai_provider"/>
+                <field name="ai_model"/>
+                <field name="auto_respond" widget="boolean_toggle"/>
+                <field name="create_partner" widget="boolean_toggle"/>
+                <field name="create_lead" widget="boolean_toggle"/>
+                <field name="active_sessions"/>
+                <field name="total_sessions"/>
+                <field name="active" column_invisible="True"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- ═══════════════════════════════════════════════════════════════════════
+         SEARCH VIEW
+    ═══════════════════════════════════════════════════════════════════════ -->
+    <record id="view_whatsapp_ai_agent_search" model="ir.ui.view">
+        <field name="name">whatsapp.ai.agent.search</field>
+        <field name="model">whatsapp.ai.agent</field>
+        <field name="arch" type="xml">
+            <search string="Buscar Agentes AI">
+                <field name="name"/>
+                <field name="whatsapp_account_id"/>
+                <filter string="Activos" name="active" domain="[('active', '=', True)]"/>
+                <filter string="Archivados" name="archived" domain="[('active', '=', False)]"/>
+                <filter string="Auto-respuesta ON" name="auto_respond"
+                        domain="[('auto_respond', '=', True)]"/>
+                <separator/>
+                <filter string="OpenAI" name="openai"
+                        domain="[('ai_provider', '=', 'openai')]"/>
+                <filter string="Anthropic" name="anthropic"
+                        domain="[('ai_provider', '=', 'anthropic')]"/>
+                <group expand="0" string="Agrupar por">
+                    <filter string="Cuenta WhatsApp" name="group_account"
+                            context="{'group_by': 'whatsapp_account_id'}"/>
+                    <filter string="Proveedor AI" name="group_provider"
+                            context="{'group_by': 'ai_provider'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- ═══════════════════════════════════════════════════════════════════════
+         ACTION
+    ═══════════════════════════════════════════════════════════════════════ -->
+    <record id="action_whatsapp_ai_agent" model="ir.actions.act_window">
+        <field name="name">Agentes AI WhatsApp</field>
+        <field name="res_model">whatsapp.ai.agent</field>
+        <field name="view_mode">list,form</field>
+        <field name="search_view_id" ref="view_whatsapp_ai_agent_search"/>
+        <field name="context">{'search_default_active': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Crear tu primer Agente AI para WhatsApp
+            </p>
+            <p>
+                Configura un agente AI que responda automáticamente los mensajes
+                de WhatsApp, cree contactos y genere leads en CRM.
+            </p>
+        </field>
+    </record>
+
+</odoo>

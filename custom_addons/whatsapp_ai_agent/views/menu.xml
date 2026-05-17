@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Menú raíz: aparece dentro de la app WhatsApp -->
+    <menuitem id="menu_whatsapp_ai_root"
+              name="AI Agent"
+              parent="whatsapp.menu_whatsapp_root"
+              sequence="20"/>
+
+    <menuitem id="menu_whatsapp_ai_agents"
+              name="Agentes AI"
+              parent="menu_whatsapp_ai_root"
+              action="action_whatsapp_ai_agent"
+              sequence="10"/>
+
+    <menuitem id="menu_whatsapp_ai_sessions"
+              name="Conversaciones"
+              parent="menu_whatsapp_ai_root"
+              action="action_whatsapp_ai_session"
+              sequence="20"/>
+
+</odoo>

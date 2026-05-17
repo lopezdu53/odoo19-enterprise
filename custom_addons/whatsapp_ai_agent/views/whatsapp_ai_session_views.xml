@@ -1,0 +1,156 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ═══════════════════════════════════════════════════════════════════════
+         FORM VIEW - Sesión
+    ═══════════════════════════════════════════════════════════════════════ -->
+    <record id="view_whatsapp_ai_session_form" model="ir.ui.view">
+        <field name="name">whatsapp.ai.session.form</field>
+        <field name="model">whatsapp.ai.session</field>
+        <field name="arch" type="xml">
+            <form string="Sesión de Conversación">
+                <header>
+                    <button name="action_close_session"
+                            string="Cerrar Sesión"
+                            type="object"
+                            invisible="state != 'active'"
+                            class="btn-secondary"/>
+                    <button name="action_reopen_session"
+                            string="Reabrir Sesión"
+                            type="object"
+                            invisible="state != 'closed'"
+                            class="btn-secondary"/>
+                    <field name="state"
+                           widget="statusbar"
+                           statusbar_visible="active,closed"/>
+                </header>
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_view_lead"
+                                type="object"
+                                class="oe_stat_button"
+                                icon="fa-handshake-o"
+                                invisible="not lead_id">
+                            <span class="o_stat_text">Ver Lead</span>
+                        </button>
+                        <button name="action_view_partner"
+                                type="object"
+                                class="oe_stat_button"
+                                icon="fa-user"
+                                invisible="not partner_id">
+                            <span class="o_stat_text">Ver Contacto</span>
+                        </button>
+                    </div>
+
+                    <group>
+                        <group string="Información de Contacto">
+                            <field name="mobile_number"/>
+                            <field name="partner_id"/>
+                            <field name="lead_id"/>
+                        </group>
+                        <group string="Configuración">
+                            <field name="agent_id"/>
+                            <field name="state" readonly="1"/>
+                            <field name="last_message_date" readonly="1"/>
+                        </group>
+                    </group>
+
+                    <group string="Estadísticas de la Sesión">
+                        <group>
+                            <field name="message_count" readonly="1"/>
+                            <field name="inbound_count" readonly="1"/>
+                            <field name="outbound_count" readonly="1"/>
+                        </group>
+                    </group>
+
+                    <!-- Conversación -->
+                    <separator string="Conversación"/>
+                    <field name="message_ids" nolabel="1" readonly="1">
+                        <list decoration-info="direction == 'inbound'"
+                              decoration-success="direction == 'outbound'"
+                              create="false" edit="false" delete="false">
+                            <field name="date" string="Hora"/>
+                            <field name="direction" string="De"/>
+                            <field name="body" string="Mensaje"/>
+                        </list>
+                    </field>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- ═══════════════════════════════════════════════════════════════════════
+         LIST VIEW - Sesión
+    ═══════════════════════════════════════════════════════════════════════ -->
+    <record id="view_whatsapp_ai_session_list" model="ir.ui.view">
+        <field name="name">whatsapp.ai.session.list</field>
+        <field name="model">whatsapp.ai.session</field>
+        <field name="arch" type="xml">
+            <list string="Sesiones de Conversación"
+                  decoration-muted="state == 'closed'"
+                  decoration-success="state == 'active'">
+                <field name="display_name" string="Conversación"/>
+                <field name="mobile_number" string="Teléfono"/>
+                <field name="partner_id" string="Contacto"/>
+                <field name="agent_id" string="Agente"/>
+                <field name="state" string="Estado" widget="badge"
+                       decoration-success="state == 'active'"
+                       decoration-secondary="state == 'closed'"/>
+                <field name="last_message_date" string="Último Mensaje"/>
+                <field name="message_count" string="Mensajes"/>
+                <field name="inbound_count" string="Recibidos"/>
+                <field name="outbound_count" string="Enviados"/>
+                <field name="lead_id" string="Lead"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- ═══════════════════════════════════════════════════════════════════════
+         SEARCH VIEW - Sesión
+    ═══════════════════════════════════════════════════════════════════════ -->
+    <record id="view_whatsapp_ai_session_search" model="ir.ui.view">
+        <field name="name">whatsapp.ai.session.search</field>
+        <field name="model">whatsapp.ai.session</field>
+        <field name="arch" type="xml">
+            <search string="Buscar Sesiones">
+                <field name="mobile_number"/>
+                <field name="partner_id"/>
+                <field name="agent_id"/>
+                <field name="lead_id"/>
+                <filter string="Activas" name="active" domain="[('state', '=', 'active')]"/>
+                <filter string="Cerradas" name="closed" domain="[('state', '=', 'closed')]"/>
+                <filter string="Con Lead" name="with_lead" domain="[('lead_id', '!=', False)]"/>
+                <filter string="Sin Lead" name="without_lead" domain="[('lead_id', '=', False)]"/>
+                <group expand="0" string="Agrupar por">
+                    <filter string="Agente" name="group_agent"
+                            context="{'group_by': 'agent_id'}"/>
+                    <filter string="Estado" name="group_state"
+                            context="{'group_by': 'state'}"/>
+                    <filter string="Contacto" name="group_partner"
+                            context="{'group_by': 'partner_id'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- ═══════════════════════════════════════════════════════════════════════
+         ACTION - Sesiones
+    ═══════════════════════════════════════════════════════════════════════ -->
+    <record id="action_whatsapp_ai_session" model="ir.actions.act_window">
+        <field name="name">Sesiones de Conversación</field>
+        <field name="res_model">whatsapp.ai.session</field>
+        <field name="view_mode">list,form</field>
+        <field name="search_view_id" ref="view_whatsapp_ai_session_search"/>
+        <field name="context">{'search_default_active': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                No hay sesiones de conversación aún
+            </p>
+            <p>
+                Las sesiones se crean automáticamente cuando llegan mensajes
+                de WhatsApp gestionados por un agente AI activo.
+            </p>
+        </field>
+    </record>
+
+</odoo>
