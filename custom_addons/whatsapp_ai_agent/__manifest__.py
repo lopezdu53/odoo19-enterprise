@@ -32,8 +32,8 @@
         'views/menu.xml',
     ],
     'installable': True,
-    'application': False,
+    'application': True,
     'auto_install': False,
     'license': 'LGPL-3',
-    'images': ['static/description/banner.png'],
+    'images': ['static/description/icon.png'],
 }
