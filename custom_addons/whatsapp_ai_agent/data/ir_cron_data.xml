@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Tarea programada: Cierre automático de sesiones inactivas -->
+    <record id="ir_cron_close_inactive_sessions" model="ir.cron">
+        <field name="name">WhatsApp AI: Cerrar sesiones inactivas</field>
+        <field name="model_id" ref="model_whatsapp_ai_agent"/>
+        <field name="state">code</field>
+        <field name="code">model._cron_close_inactive_sessions()</field>
+        <field name="interval_number">6</field>
+        <field name="interval_type">hours</field>
+        <field name="active">True</field>
+    </record>
+
+</odoo>

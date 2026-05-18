@@ -1,0 +1,7 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_whatsapp_ai_agent_user,whatsapp.ai.agent user,model_whatsapp_ai_agent,base.group_user,1,0,0,0
+access_whatsapp_ai_agent_manager,whatsapp.ai.agent manager,model_whatsapp_ai_agent,base.group_system,1,1,1,1
+access_whatsapp_ai_session_user,whatsapp.ai.session user,model_whatsapp_ai_session,base.group_user,1,0,0,0
+access_whatsapp_ai_session_manager,whatsapp.ai.session manager,model_whatsapp_ai_session,base.group_system,1,1,1,1
+access_whatsapp_ai_message_user,whatsapp.ai.message user,model_whatsapp_ai_message,base.group_user,1,0,0,0
+access_whatsapp_ai_message_manager,whatsapp.ai.message manager,model_whatsapp_ai_message,base.group_system,1,1,1,1
