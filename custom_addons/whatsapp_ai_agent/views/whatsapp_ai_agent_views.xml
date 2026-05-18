@@ -240,7 +240,7 @@
                         domain="[('ai_provider', '=', 'openai')]"/>
                 <filter string="Anthropic" name="anthropic"
                         domain="[('ai_provider', '=', 'anthropic')]"/>
-                <group expand="0" string="Agrupar por">
+                <group string="Agrupar por">
                     <filter string="Cuenta WhatsApp" name="group_account"
                             context="{'group_by': 'whatsapp_account_id'}"/>
                     <filter string="Proveedor AI" name="group_provider"

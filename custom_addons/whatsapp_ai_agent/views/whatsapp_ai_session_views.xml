@@ -121,7 +121,7 @@
                 <filter string="Cerradas" name="closed" domain="[('state', '=', 'closed')]"/>
                 <filter string="Con Lead" name="with_lead" domain="[('lead_id', '!=', False)]"/>
                 <filter string="Sin Lead" name="without_lead" domain="[('lead_id', '=', False)]"/>
-                <group expand="0" string="Agrupar por">
+                <group string="Agrupar por">
                     <filter string="Agente" name="group_agent"
                             context="{'group_by': 'agent_id'}"/>
                     <filter string="Estado" name="group_state"
