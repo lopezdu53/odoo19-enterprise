@@ -95,7 +95,7 @@
                 <field name="agent_id" string="Agente"/>
                 <field name="state" string="Estado" widget="badge"
                        decoration-success="state == 'active'"
-                       decoration-secondary="state == 'closed'"/>
+                       decoration-muted="state == 'closed'"/>
                 <field name="last_message_date" string="Último Mensaje"/>
                 <field name="message_count" string="Mensajes"/>
                 <field name="inbound_count" string="Recibidos"/>
