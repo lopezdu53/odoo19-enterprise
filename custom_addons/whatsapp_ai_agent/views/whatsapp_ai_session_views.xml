@@ -112,7 +112,7 @@
         <field name="name">whatsapp.ai.session.search</field>
         <field name="model">whatsapp.ai.session</field>
         <field name="arch" type="xml">
-            <search string="Buscar Sesiones">
+            <search>
                 <field name="mobile_number"/>
                 <field name="partner_id"/>
                 <field name="agent_id"/>

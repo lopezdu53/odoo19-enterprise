@@ -229,14 +229,13 @@
         <field name="name">whatsapp.ai.agent.search</field>
         <field name="model">whatsapp.ai.agent</field>
         <field name="arch" type="xml">
-            <search string="Buscar Agentes AI">
+            <search>
                 <field name="name"/>
                 <field name="whatsapp_account_id"/>
                 <filter string="Activos" name="active" domain="[('active', '=', True)]"/>
                 <filter string="Archivados" name="archived" domain="[('active', '=', False)]"/>
                 <filter string="Auto-respuesta ON" name="auto_respond"
                         domain="[('auto_respond', '=', True)]"/>
-                <separator/>
                 <filter string="OpenAI" name="openai"
                         domain="[('ai_provider', '=', 'openai')]"/>
                 <filter string="Anthropic" name="anthropic"
