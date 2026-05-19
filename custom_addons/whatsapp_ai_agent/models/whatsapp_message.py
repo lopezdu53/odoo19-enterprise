@@ -111,9 +111,10 @@ class WhatsappMessage(models.Model):
                     messages = new_env['whatsapp.message'].browse(message_ids).exists()
 
                     for message in messages:
-                        # Saltar si no tiene cuenta WhatsApp
-                        account_id = getattr(message, 'whatsapp_account_id', None)
+                        # Saltar si no tiene cuenta WhatsApp (campo es wa_account_id en Odoo 19)
+                        account_id = getattr(message, 'wa_account_id', None) or getattr(message, 'whatsapp_account_id', None)
                         if not account_id:
+                            _logger.warning('[WhatsApp AI] Mensaje %d sin cuenta WhatsApp, saltando', message.id)
                             continue
 
                         # Buscar agentes activos configurados para esta cuenta
@@ -149,7 +150,7 @@ class WhatsappMessage(models.Model):
             daemon=True,
         )
         thread.start()
-        _logger.debug(
+        _logger.info(
             '[WhatsApp AI] Hilo de procesamiento lanzado para mensajes: %s',
             message_ids,
         )
