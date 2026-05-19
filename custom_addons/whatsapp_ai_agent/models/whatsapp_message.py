@@ -22,7 +22,7 @@ class WhatsappMessage(models.Model):
             return records
 
         # Filtrar mensajes entrantes
-        inbound = records.filtered(self._is_inbound)
+        inbound = records.filtered(lambda r: r._is_inbound())
         if inbound:
             inbound._schedule_ai_processing()
 
@@ -37,7 +37,7 @@ class WhatsappMessage(models.Model):
 
         new_state = vals.get('state')
         if new_state and self._state_is_received(new_state):
-            self.filtered(self._is_inbound)._schedule_ai_processing()
+            self.filtered(lambda r: r._is_inbound())._schedule_ai_processing()
 
         return result
 
