@@ -661,6 +661,11 @@ class WhatsappAiAgent(models.Model):
         conversation = self._build_conversation_history(session)
         ai_response = self._get_ai_response(self.system_prompt, conversation)
 
+        if ai_response:
+            # Eliminar bloques <think>...</think> del modelo
+            import re
+            ai_response = re.sub(r'<think>.*?</think>', '', ai_response, flags=re.DOTALL).strip()
+
         if not ai_response:
             _logger.warning(
                 '[WhatsApp AI] Sin respuesta del AI para mensaje de %s. '
@@ -682,6 +687,20 @@ class WhatsappAiAgent(models.Model):
                 'direction': 'outbound',
                 'body': ai_response,
             })
+
+            # 9. Publicar respuesta en el canal de Odoo para que agentes humanos la vean
+            try:
+                mail_msg = getattr(whatsapp_message, 'mail_message_id', None)
+                if mail_msg and mail_msg.model == 'discuss.channel':
+                    channel = self.env['discuss.channel'].browse(mail_msg.res_id)
+                    if channel.exists():
+                        channel.with_context(whatsapp_ai_response=True).message_post(
+                            body=ai_response,
+                            message_type='comment',
+                            author_id=self.env.ref('base.user_root').partner_id.id,
+                        )
+            except Exception as e:
+                _logger.debug('[WhatsApp AI] No se pudo postear en canal Odoo: %s', e)
 
             # Registrar en el lead también
             if self.create_lead and session.lead_id:
