@@ -143,14 +143,15 @@
 
                         <!-- ── Pestaña: Entrenamiento ── -->
                         <page string="Entrenamiento (Prompt)" name="training">
-                            <group>
-                                <field name="system_prompt"
-                                       nolabel="1"
-                                       placeholder="Describe aquí el rol y conocimientos del agente...&#10;&#10;Ejemplo:&#10;Eres el asistente virtual de [Tu Empresa], especializado en ventas de software.&#10;Tu objetivo es resolver dudas de clientes potenciales y ayudarlos a elegir el producto adecuado.&#10;Siempre responde en español de forma amigable y profesional.&#10;Cuando el cliente muestre interés en comprar, solicita su nombre, email y teléfono.&#10;No menciones a la competencia.&#10;Horario de atención humana: Lunes a Viernes 9:00-18:00."
-                                       widget="html"/>
+                            <group string="Parámetros de Contexto">
                                 <field name="max_history_messages"/>
                             </group>
-                            <div class="alert alert-warning" role="alert">
+                            <separator string="Prompt de Sistema"/>
+                            <field name="system_prompt"
+                                   nolabel="1"
+                                   placeholder="Describe aquí el rol y conocimientos del agente...&#10;&#10;Ejemplo:&#10;Eres el asistente virtual de [Tu Empresa], especializado en ventas de software.&#10;Tu objetivo es resolver dudas de clientes potenciales y ayudarlos a elegir el producto adecuado.&#10;Siempre responde en español de forma amigable y profesional.&#10;Cuando el cliente muestre interés en comprar, solicita su nombre, email y teléfono.&#10;No menciones a la competencia."
+                                   style="min-height:300px;"/>
+                            <div class="alert alert-warning mt-2" role="alert">
                                 <strong>Consejos para el Prompt:</strong>
                                 <ul>
                                     <li>Define claramente el <strong>rol</strong> del agente (vendedor, soporte, informativo).</li>
