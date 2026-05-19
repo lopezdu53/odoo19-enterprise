@@ -104,9 +104,9 @@ class WhatsappMessage(models.Model):
             time.sleep(1.5)
 
             try:
-                from odoo import registry as odoo_registry
+                from odoo.modules.registry import Registry
 
-                with odoo_registry(db_name).cursor() as new_cr:
+                with Registry(db_name).cursor() as new_cr:
                     new_env = self.env(cr=new_cr)
                     messages = new_env['whatsapp.message'].browse(message_ids).exists()
 
