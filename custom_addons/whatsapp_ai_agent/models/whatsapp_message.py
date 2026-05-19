@@ -1,7 +1,7 @@
 import logging
 import threading
 
-from odoo import api, models
+from odoo import api, fields, models
 
 _logger = logging.getLogger(__name__)
 
@@ -25,6 +25,12 @@ class WhatsappMessage(models.Model):
         inbound = records.filtered(lambda r: r._is_inbound())
         if inbound:
             inbound._schedule_ai_processing()
+
+        # Detectar mensajes salientes de agentes humanos (no del AI)
+        if not self.env.context.get('whatsapp_ai_response'):
+            outbound = records.filtered(lambda r: not r._is_inbound())
+            if outbound:
+                outbound._handle_human_outbound()
 
         return records
 
@@ -84,6 +90,49 @@ class WhatsappMessage(models.Model):
     def _state_is_received(state):
         """Verifica si el estado corresponde a un mensaje recibido."""
         return state in ('received', 'inbound', 'incoming')
+
+    # ── Detección de mensajes salientes humanos ─────────────────────────────────
+
+    def _handle_human_outbound(self):
+        """Detecta respuesta de agente humano y pausa el AI para esa sesión."""
+        for msg in self:
+            account_id = getattr(msg, 'wa_account_id', None) or getattr(msg, 'whatsapp_account_id', None)
+            mobile = getattr(msg, 'mobile_number', None)
+            if not account_id or not mobile:
+                continue
+
+            agents = self.env['whatsapp.ai.agent'].search([
+                ('whatsapp_account_id', '=', account_id.id),
+                ('active', '=', True),
+            ])
+            for agent in agents:
+                session = self.env['whatsapp.ai.session'].search([
+                    ('agent_id', '=', agent.id),
+                    ('mobile_number', '=', mobile),
+                    ('state', '=', 'active'),
+                ], limit=1)
+                if session and not session.human_takeover:
+                    session.write({
+                        'human_takeover': True,
+                        'human_takeover_date': fields.Datetime.now(),
+                    })
+                    # Registrar mensaje humano en el historial de la sesión
+                    body = getattr(msg, 'free_text_json', None)
+                    if isinstance(body, dict):
+                        body = body.get('body', '') or body.get('text', '')
+                    if not body:
+                        body = getattr(msg, 'body', None)
+                    if body:
+                        self.env['whatsapp.ai.message'].create({
+                            'session_id': session.id,
+                            'direction': 'human',
+                            'body': str(body),
+                            'whatsapp_message_id': msg.id,
+                        })
+                    _logger.info(
+                        '[WhatsApp AI] Agente humano tomó control de sesión %s (número: %s)',
+                        session.id, mobile,
+                    )
 
     # ── Procesamiento asíncrono ─────────────────────────────────────────────────
 

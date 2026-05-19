@@ -53,6 +53,18 @@ class WhatsappAiSession(models.Model):
         index=True,
     )
 
+    # ── Control humano ───────────────────────────────────────────────────────────
+    human_takeover = fields.Boolean(
+        string='En control humano',
+        default=False,
+        index=True,
+        help='El agente humano tomó el control. El AI no responderá hasta que expire el tiempo configurado.',
+    )
+    human_takeover_date = fields.Datetime(
+        string='Fecha de intervención humana',
+        help='Cuando el agente humano tomó el control.',
+    )
+
     # ── Mensajes ─────────────────────────────────────────────────────────────────
     message_ids = fields.One2many(
         'whatsapp.ai.message',
@@ -100,6 +112,9 @@ class WhatsappAiSession(models.Model):
     def action_close_session(self):
         self.write({'state': 'closed'})
 
+    def action_resume_ai(self):
+        self.write({'human_takeover': False, 'human_takeover_date': False})
+
     def action_reopen_session(self):
         self.write({'state': 'active'})
 
@@ -146,6 +161,7 @@ class WhatsappAiMessage(models.Model):
     direction = fields.Selection([
         ('inbound', 'Entrante (Cliente)'),
         ('outbound', 'Saliente (AI)'),
+        ('human', 'Agente Humano'),
     ], string='Dirección', required=True, index=True)
 
     body = fields.Text(string='Mensaje')

@@ -106,6 +106,11 @@ class WhatsappAiAgent(models.Model):
         default=2,
         help='Simula tiempo de escritura humana antes de enviar la respuesta.',
     )
+    human_takeover_timeout = fields.Integer(
+        string='Tiempo de reactivación tras intervención humana (minutos)',
+        default=30,
+        help='Minutos de inactividad del agente humano antes de que el AI retome el control. 0 = nunca reactivar automáticamente.',
+    )
     fallback_message = fields.Text(
         string='Mensaje de Error',
         default='Disculpa, estoy teniendo problemas técnicos en este momento. '
@@ -631,6 +636,11 @@ class WhatsappAiAgent(models.Model):
         session = self._find_or_create_session(mobile_number, partner)
         session.last_message_date = fields.Datetime.now()
 
+        # Verificar si el agente humano tiene el control
+        if session.human_takeover:
+            _logger.info('[WhatsApp AI] Sesión %s en control humano, AI en pausa.', session.id)
+            return
+
         # 3. Registrar mensaje entrante en la sesión
         self.env['whatsapp.ai.message'].create({
             'session_id': session.id,
@@ -733,3 +743,16 @@ class WhatsappAiAgent(models.Model):
             _logger.info(
                 '[WhatsApp AI] %d sesiones inactivas cerradas.', len(stale),
             )
+
+        # Reactivar sesiones donde expiró el timeout de intervención humana
+        sessions_to_resume = self.env['whatsapp.ai.session'].search([
+            ('human_takeover', '=', True),
+            ('state', '=', 'active'),
+        ])
+        for session in sessions_to_resume:
+            if not session.agent_id.human_takeover_timeout:
+                continue
+            timeout_delta = timedelta(minutes=session.agent_id.human_takeover_timeout)
+            if session.human_takeover_date and fields.Datetime.now() >= session.human_takeover_date + timeout_delta:
+                session.write({'human_takeover': False, 'human_takeover_date': False})
+                _logger.info('[WhatsApp AI] Control devuelto al AI en sesión %s', session.id)

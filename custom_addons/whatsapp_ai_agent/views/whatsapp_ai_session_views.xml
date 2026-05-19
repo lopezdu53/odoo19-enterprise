@@ -20,6 +20,11 @@
                             type="object"
                             invisible="state != 'closed'"
                             class="btn-secondary"/>
+                    <button name="action_resume_ai"
+                            string="Reactivar AI"
+                            type="object"
+                            invisible="not human_takeover"
+                            class="btn-primary"/>
                     <field name="state"
                            widget="statusbar"
                            statusbar_visible="active,closed"/>
@@ -52,6 +57,9 @@
                             <field name="agent_id"/>
                             <field name="state" readonly="1"/>
                             <field name="last_message_date" readonly="1"/>
+                            <field name="human_takeover" readonly="1"/>
+                            <field name="human_takeover_date" readonly="1"
+                                   invisible="not human_takeover"/>
                         </group>
                     </group>
 
@@ -96,6 +104,7 @@
                 <field name="state" string="Estado" widget="badge"
                        decoration-success="state == 'active'"
                        decoration-muted="state == 'closed'"/>
+                <field name="human_takeover" string="Control Humano" widget="boolean"/>
                 <field name="last_message_date" string="Último Mensaje"/>
                 <field name="message_count" string="Mensajes"/>
                 <field name="inbound_count" string="Recibidos"/>

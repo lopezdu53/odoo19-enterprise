@@ -95,6 +95,7 @@
                                     <field name="ai_max_tokens"
                                            invisible="ai_provider == 'odoo_native'"/>
                                     <field name="response_delay_seconds"/>
+                                    <field name="human_takeover_timeout"/>
                                 </group>
                             </group>
 
