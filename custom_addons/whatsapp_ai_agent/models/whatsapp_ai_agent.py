@@ -361,9 +361,12 @@ class WhatsappAiAgent(models.Model):
         if normalized and normalized != mobile_number:
             candidates.append(normalized)
 
+        partner_fields = self.env['res.partner']._fields
+        phone_field = 'mobile' if 'mobile' in partner_fields else 'phone'
+
         domain = ['|'] * (len(candidates) - 1)
         for num in candidates:
-            domain += [('mobile', '=', num)]
+            domain += [(phone_field, '=', num)]
         domain += [('active', '=', True)]
 
         partner = self.env['res.partner'].search(domain, limit=1)
@@ -372,7 +375,7 @@ class WhatsappAiAgent(models.Model):
             name = display_name or f"{self.partner_name_prefix} {mobile_number}"
             partner = self.env['res.partner'].create({
                 'name': name,
-                'mobile': mobile_number,
+                phone_field: mobile_number,
                 'customer_rank': 1,
                 'comment': _('Contacto creado automáticamente por WhatsApp AI Agent.'),
             })
@@ -433,9 +436,11 @@ class WhatsappAiAgent(models.Model):
             else f"WhatsApp - {session.mobile_number}"
         )
 
+        crm_fields = self.env['crm.lead']._fields
+        lead_phone_field = 'mobile' if 'mobile' in crm_fields else 'phone'
         lead_vals = {
             'name': lead_name,
-            'mobile': session.mobile_number,
+            lead_phone_field: session.mobile_number,
             'partner_id': partner.id if partner else False,
             'partner_name': partner.name if partner else session.mobile_number,
             'team_id': self.lead_team_id.id if self.lead_team_id else False,
