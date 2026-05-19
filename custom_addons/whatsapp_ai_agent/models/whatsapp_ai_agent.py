@@ -542,9 +542,9 @@ class WhatsappAiAgent(models.Model):
             account = self.whatsapp_account_id
 
             phone_number_id = (
-                getattr(account, 'phone_number_id', None)
+                getattr(account, 'phone_uid', None)
+                or getattr(account, 'phone_number_id', None)
                 or getattr(account, 'wa_phone_number_id', None)
-                or getattr(account, 'number_id', None)
             )
             token = (
                 getattr(account, 'token', None)
