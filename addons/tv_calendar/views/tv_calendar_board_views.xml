@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_tv_calendar_board_list" model="ir.ui.view">
+        <field name="name">tv.calendar.board.list</field>
+        <field name="model">tv.calendar.board</field>
+        <field name="arch" type="xml">
+            <list string="Tableros TV">
+                <field name="name"/>
+                <field name="task_count" string="Tareas"/>
+                <field name="refresh_interval"/>
+                <field name="theme"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_tv_calendar_board_form" model="ir.ui.view">
+        <field name="name">tv.calendar.board.form</field>
+        <field name="model">tv.calendar.board</field>
+        <field name="arch" type="xml">
+            <form string="Tablero TV">
+                <header>
+                    <button name="action_open_kiosk" type="object" string="Abrir en el TV"
+                            class="btn-primary" icon="fa-television"/>
+                    <button name="action_regenerate_token" type="object"
+                            string="Regenerar URL"
+                            confirm="Se invalidara la URL actual del TV. Tendras que volver a abrirla en la pantalla. Continuar?"
+                            icon="fa-refresh"/>
+                </header>
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_view_tasks" type="object"
+                                class="oe_stat_button" icon="fa-tasks">
+                            <field name="task_count" widget="statinfo" string="Tareas"/>
+                        </button>
+                    </div>
+                    <div class="oe_title">
+                        <label for="name"/>
+                        <h1><field name="name" placeholder="Ej: Cronograma Produccion"/></h1>
+                    </div>
+                    <group>
+                        <group string="Visualizacion en el TV">
+                            <field name="theme"/>
+                            <field name="week_start"/>
+                            <field name="show_weekends"/>
+                            <field name="refresh_interval"/>
+                        </group>
+                        <group string="Acceso del TV">
+                            <field name="kiosk_url" widget="CopyClipboardChar"/>
+                            <field name="active"/>
+                        </group>
+                    </group>
+                    <div class="alert alert-info" role="alert">
+                        Abre la URL del TV en el navegador de la pantalla (modo pantalla
+                        completa). No pide inicio de sesion: cualquiera con la URL puede
+                        verla, por eso el enlace lleva un token secreto. Usa
+                        <b>Regenerar URL</b> si el enlace se filtra.
+                    </div>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_tv_calendar_board" model="ir.actions.act_window">
+        <field name="name">Tableros TV</field>
+        <field name="res_model">tv.calendar.board</field>
+        <field name="view_mode">list,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Crea tu primer tablero</p>
+            <p>Un tablero es una pantalla de TV. Cada uno tiene su propia URL para proyectar.</p>
+        </field>
+    </record>
+</odoo>

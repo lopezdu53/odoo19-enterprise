@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+    <!-- Tablero por defecto, listo para proyectar en cuanto se instala. -->
+    <record id="board_default" model="tv.calendar.board">
+        <field name="name">Cronograma Principal</field>
+        <field name="theme">light</field>
+        <field name="week_start">0</field>
+        <field name="show_weekends" eval="True"/>
+        <field name="refresh_interval">300</field>
+    </record>
+
+    <!-- Tareas de ejemplo del mes en curso para ver el resultado enseguida. -->
+    <record id="task_demo_1" model="tv.calendar.task">
+        <field name="name">Reunion de equipo</field>
+        <field name="board_id" ref="board_default"/>
+        <field name="importance">normal</field>
+        <field name="date" eval="(datetime.date.today().replace(day=3))"/>
+    </record>
+    <record id="task_demo_2" model="tv.calendar.task">
+        <field name="name">Entrega cliente</field>
+        <field name="board_id" ref="board_default"/>
+        <field name="importance">critical</field>
+        <field name="date" eval="(datetime.date.today().replace(day=12))"/>
+    </record>
+    <record id="task_demo_3" model="tv.calendar.task">
+        <field name="name">Mantenimiento servidores</field>
+        <field name="board_id" ref="board_default"/>
+        <field name="importance">high</field>
+        <field name="date" eval="(datetime.date.today().replace(day=18))"/>
+        <field name="date_end" eval="(datetime.date.today().replace(day=19))"/>
+    </record>
+    <record id="task_demo_4" model="tv.calendar.task">
+        <field name="name">Revision inventario</field>
+        <field name="board_id" ref="board_default"/>
+        <field name="importance">low</field>
+        <field name="date" eval="(datetime.date.today().replace(day=25))"/>
+    </record>
+</odoo>

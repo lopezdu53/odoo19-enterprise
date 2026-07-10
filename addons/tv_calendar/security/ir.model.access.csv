@@ -1,0 +1,5 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_tv_calendar_task_user,tv.calendar.task.user,model_tv_calendar_task,base.group_user,1,1,1,1
+access_tv_calendar_board_user,tv.calendar.board.user,model_tv_calendar_board,base.group_user,1,0,0,0
+access_tv_calendar_board_manager,tv.calendar.board.manager,model_tv_calendar_board,tv_calendar.group_tv_calendar_manager,1,1,1,1
+access_tv_calendar_task_manager,tv.calendar.task.manager,model_tv_calendar_task,tv_calendar.group_tv_calendar_manager,1,1,1,1

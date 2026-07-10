@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_tv_calendar_task_list" model="ir.ui.view">
+        <field name="name">tv.calendar.task.list</field>
+        <field name="model">tv.calendar.task</field>
+        <field name="arch" type="xml">
+            <list string="Tareas" decoration-muted="done">
+                <field name="date"/>
+                <field name="date_end" optional="hide"/>
+                <field name="name"/>
+                <field name="board_id"/>
+                <field name="importance" widget="badge"
+                       decoration-danger="importance == 'critical'"
+                       decoration-warning="importance == 'high'"
+                       decoration-info="importance == 'normal'"
+                       decoration-success="importance == 'low'"/>
+                <field name="user_id" widget="many2one_avatar_user"/>
+                <field name="done" widget="boolean_toggle"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_tv_calendar_task_form" model="ir.ui.view">
+        <field name="name">tv.calendar.task.form</field>
+        <field name="model">tv.calendar.task</field>
+        <field name="arch" type="xml">
+            <form string="Tarea">
+                <sheet>
+                    <div class="oe_title">
+                        <label for="name"/>
+                        <h1><field name="name" placeholder="Titulo de la tarea..."/></h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="board_id"/>
+                            <field name="importance"/>
+                            <field name="user_id" widget="many2one_avatar_user"/>
+                            <field name="done"/>
+                        </group>
+                        <group>
+                            <field name="date"/>
+                            <field name="date_end"/>
+                        </group>
+                    </group>
+                    <group string="Descripcion">
+                        <field name="description" nolabel="1"
+                               placeholder="Detalles opcionales..."/>
+                    </group>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_tv_calendar_task_calendar" model="ir.ui.view">
+        <field name="name">tv.calendar.task.calendar</field>
+        <field name="model">tv.calendar.task</field>
+        <field name="arch" type="xml">
+            <calendar string="Tareas" date_start="date" date_stop="date_end"
+                      color="importance" mode="month">
+                <field name="name"/>
+                <field name="board_id" filters="1"/>
+                <field name="importance" filters="1"/>
+                <field name="user_id" filters="1"/>
+            </calendar>
+        </field>
+    </record>
+
+    <record id="view_tv_calendar_task_search" model="ir.ui.view">
+        <field name="name">tv.calendar.task.search</field>
+        <field name="model">tv.calendar.task</field>
+        <field name="arch" type="xml">
+            <search string="Buscar tareas">
+                <field name="name"/>
+                <field name="board_id"/>
+                <field name="user_id"/>
+                <filter name="pending" string="Pendientes" domain="[('done', '=', False)]"/>
+                <filter name="done" string="Completadas" domain="[('done', '=', True)]"/>
+                <separator/>
+                <filter name="imp_critical" string="Critica" domain="[('importance', '=', 'critical')]"/>
+                <filter name="imp_high" string="Alta" domain="[('importance', '=', 'high')]"/>
+                <group expand="0" string="Agrupar por">
+                    <filter name="group_board" string="Tablero" context="{'group_by': 'board_id'}"/>
+                    <filter name="group_importance" string="Importancia" context="{'group_by': 'importance'}"/>
+                    <filter name="group_user" string="Responsable" context="{'group_by': 'user_id'}"/>
+                    <filter name="group_date" string="Fecha" context="{'group_by': 'date'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_tv_calendar_task" model="ir.actions.act_window">
+        <field name="name">Tareas</field>
+        <field name="res_model">tv.calendar.task</field>
+        <field name="view_mode">calendar,list,form</field>
+        <field name="search_view_id" ref="view_tv_calendar_task_search"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Crea tu primera tarea</p>
+            <p>Las tareas que crees apareceran en el TV, coloreadas segun su importancia.</p>
+        </field>
+    </record>
+</odoo>
