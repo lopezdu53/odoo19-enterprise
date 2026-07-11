@@ -10,5 +10,6 @@
 
     <menuitem id="menu_tv_calendar_boards" name="Tableros TV"
               parent="menu_tv_calendar_root"
-              action="action_tv_calendar_board" sequence="20"/>
+              action="action_tv_calendar_board" sequence="20"
+              groups="base.group_user"/>
 </odoo>
