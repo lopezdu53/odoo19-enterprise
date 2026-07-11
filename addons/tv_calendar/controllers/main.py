@@ -12,11 +12,12 @@ MONTHS_ES = [
     'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
     'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre',
 ]
+MONTHS_ABBR = [
+    'Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun',
+    'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic',
+]
 # Nombres de dias empezando en Lunes (indice 0 == Lunes en Python/calendar).
 WEEKDAYS_ES = ['Lunes', 'Martes', 'Miercoles', 'Jueves', 'Viernes', 'Sabado', 'Domingo']
-
-# Cuantas tareas se muestran como maximo por dia antes de resumir con "+N".
-MAX_TASKS_PER_DAY = 4
 
 
 class TvCalendarController(http.Controller):
@@ -59,14 +60,16 @@ class TvCalendarController(http.Controller):
 
         if board.template_type == 'operator':
             common.update({
-                'operator_name': board.operator_name or '',
+                'operator_name': board.operator_display or '',
                 'epp_message': board.epp_message or '',
+                'epp_message2': board.epp_message2 or '',
                 'notice_message': board.notice_message or '',
                 'slots': [{
                     'time': s.time_label or '',
                     'activity': s.activity or '',
                     'color': s.slot_color(),
                 } for s in board.time_slot_ids],
+                'today_tasks': self._operator_today_tasks(board, today),
                 'today_label': ('%s de %s de %s'
                                 % (today.day, MONTHS_ES[today.month - 1], today.year)),
             })
@@ -97,6 +100,55 @@ class TvCalendarController(http.Controller):
     # Cronograma principal
     # ------------------------------------------------------------------
     def _schedule_values(self, board, today, offset):
+        if board.schedule_range == 'month':
+            return self._month_values(board, today, offset)
+        return self._two_weeks_values(board, today)
+
+    def _two_weeks_values(self, board, today):
+        # 14 dias consecutivos empezando el dia anterior al actual (2 filas de 7).
+        start = today - timedelta(days=1)
+        grid_start = start
+        grid_end = start + timedelta(days=13)
+        tasks_by_day = self._tasks_by_day(board, grid_start, grid_end)
+
+        col_indices = list(range(7))
+        if not board.show_weekends:
+            col_indices = [c for c in col_indices
+                           if (start + timedelta(days=c)).weekday() < 5]
+        weekday_names = [WEEKDAYS_ES[(start + timedelta(days=c)).weekday()]
+                         for c in col_indices]
+
+        weeks = []
+        for row in range(2):
+            days = []
+            for c in col_indices:
+                day = start + timedelta(days=row * 7 + c)
+                day_tasks = sorted(
+                    tasks_by_day.get(day, []),
+                    key=lambda t: (-t.importance_rank, t.name or ''))
+                days.append({
+                    'day_num': day.day,
+                    'in_month': day >= today,
+                    'is_today': day == today,
+                    'is_weekend': day.weekday() >= 5,
+                    'tasks': [self._task_vals(t) for t in day_tasks[:6]],
+                    'overflow': max(0, len(day_tasks) - 6),
+                })
+            weeks.append(days)
+
+        label = '%s %s – %s %s' % (
+            grid_start.day, MONTHS_ABBR[grid_start.month - 1],
+            grid_end.day, MONTHS_ABBR[grid_end.month - 1])
+        return {
+            'month_name': label,
+            'year': today.year,
+            'weekday_names': weekday_names,
+            'num_columns': len(col_indices),
+            'weeks': weeks,
+            'legend': self._legend(board, grid_start, grid_end),
+        }
+
+    def _month_values(self, board, today, offset):
         try:
             offset = int(offset)
         except (TypeError, ValueError):
@@ -130,28 +182,35 @@ class TvCalendarController(http.Controller):
                     'in_month': day.month == month,
                     'is_today': day == today,
                     'is_weekend': day.weekday() >= 5,
-                    'tasks': [self._task_vals(t) for t in day_tasks[:MAX_TASKS_PER_DAY]],
-                    'overflow': max(0, len(day_tasks) - MAX_TASKS_PER_DAY),
+                    'tasks': [self._task_vals(t) for t in day_tasks[:4]],
+                    'overflow': max(0, len(day_tasks) - 4),
                 })
             weeks.append(days)
 
-        legend = []
-        for key in ('critical', 'high', 'normal', 'low'):
-            level = IMPORTANCE_LEVELS[key]
-            count = sum(
-                1 for t in board.task_ids
-                if t.importance == key and t.date and t.date.month == month
-                and t.date.year == year)
-            legend.append({'label': level['label'], 'color': level['color'], 'count': count})
-
+        month_first = date(year, month, 1)
+        month_last = date(year, month, calendar.monthrange(year, month)[1])
         return {
             'month_name': MONTHS_ES[month - 1],
             'year': year,
             'weekday_names': weekday_names,
             'num_columns': len(weekday_names),
             'weeks': weeks,
-            'legend': legend,
+            'legend': self._legend(board, month_first, month_last),
         }
+
+    def _legend(self, board, d1, d2):
+        legend = []
+        for key in ('critical', 'high', 'normal', 'low'):
+            level = IMPORTANCE_LEVELS[key]
+            count = 0
+            for t in board.task_ids:
+                if t.importance != key or not t.date:
+                    continue
+                end = t.date_end or t.date
+                if t.date <= d2 and end >= d1:
+                    count += 1
+            legend.append({'label': level['label'], 'color': level['color'], 'count': count})
+        return legend
 
     @staticmethod
     def _shift_month(year, month, offset):
@@ -194,6 +253,22 @@ class TvCalendarController(http.Controller):
         }
 
     # ------------------------------------------------------------------
+    # Operario: tareas activas hoy
+    # ------------------------------------------------------------------
+    def _operator_today_tasks(self, board, today):
+        source = board.task_board_id or board
+        domain = [
+            ('board_id', '=', source.id),
+            ('date', '<=', today),
+            '|',
+            '&', ('date_end', '!=', False), ('date_end', '>=', today),
+            '&', ('date_end', '=', False), ('date', '>=', today),
+        ]
+        tasks = request.env['tv.calendar.task'].sudo().search(domain)
+        tasks = tasks.sorted(key=lambda t: (-t.importance_rank, t.name or ''))
+        return [self._task_vals(t) for t in tasks]
+
+    # ------------------------------------------------------------------
     # Publicidad
     # ------------------------------------------------------------------
     @staticmethod
@@ -205,7 +280,6 @@ class TvCalendarController(http.Controller):
             params = urllib.parse.parse_qs(urllib.parse.urlparse(url).query)
             if params.get('list'):
                 return params['list'][0]
-        # Puede que hayan pegado directamente el ID de la playlist.
         if re.match(r'^[A-Za-z0-9_-]{12,}$', url):
             return url
         return False

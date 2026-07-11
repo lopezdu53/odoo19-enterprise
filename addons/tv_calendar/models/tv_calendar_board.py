@@ -50,6 +50,13 @@ class TvCalendarBoard(models.Model):
         string='Auto-refresco (segundos)', default=300,
         help="Cada cuantos segundos la pantalla del TV se recarga sola para "
              "mostrar los cambios. 0 = sin recarga automatica.")
+    schedule_range = fields.Selection(
+        [
+            ('two_weeks', '2 semanas (desde ayer)'),
+            ('month', 'Mes completo'),
+        ],
+        string='Rango del cronograma', default='two_weeks', required=True,
+        help="2 semanas: muestra 14 dias empezando el dia anterior al actual.")
     week_start = fields.Selection(
         [('0', 'Lunes'), ('6', 'Domingo')],
         string='La semana empieza en', default='0', required=True)
@@ -60,15 +67,28 @@ class TvCalendarBoard(models.Model):
         string='Tema', default='light', required=True)
 
     # --- Plantilla Operario ---
-    operator_name = fields.Char(string='Nombre del operario')
+    employee_id = fields.Many2one(
+        'hr.employee', string='Operario (empleado)',
+        help="Selecciona el operario desde el modulo de Empleados.")
+    operator_name = fields.Char(
+        string='Nombre del operario (manual)',
+        help="Se usa solo si no seleccionas un empleado.")
+    operator_display = fields.Char(
+        string='Operario', compute='_compute_operator_display')
     epp_message = fields.Char(
         string='Mensaje EPP',
         default='USAR EPP · ELEMENTOS DE PROTECCION PERSONAL')
+    epp_message2 = fields.Char(
+        string='Mensaje EPP 2',
+        default='PROHIBIDO el uso de celular, accesorios o joyas')
     notice_message = fields.Text(
         string='Avisos',
         help="Horas extra, cambios de horario de almuerzo o pausa activa, etc.")
     time_slot_ids = fields.One2many(
         'tv.calendar.time.slot', 'board_id', string='Horario del turno')
+    task_board_id = fields.Many2one(
+        'tv.calendar.board', string='Tareas del tablero',
+        help="De que tablero tomar las tareas del dia. Vacio = este mismo tablero.")
 
     # --- Plantilla Publicidad ---
     youtube_url = fields.Char(
@@ -88,6 +108,12 @@ class TvCalendarBoard(models.Model):
     def _compute_task_count(self):
         for board in self:
             board.task_count = len(board.task_ids)
+
+    @api.depends('employee_id', 'operator_name')
+    def _compute_operator_display(self):
+        for board in self:
+            board.operator_display = (
+                board.employee_id.name or board.operator_name or '')
 
     @api.depends('access_token')
     def _compute_kiosk_url(self):

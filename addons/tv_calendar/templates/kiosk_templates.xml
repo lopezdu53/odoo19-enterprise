@@ -118,15 +118,37 @@
                     .op-act.pill { color: #fff; border-radius: 8px; padding: .5vh 1vw; display: inline-block; }
                     .op-right { flex: 3 1 0; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
                     .op-epp {
-                        background: #d32f2f; color: #fff; border-radius: 10px; padding: 1.6vh 1.2vw;
+                        background: #d32f2f; color: #fff; border-radius: 10px; padding: 1.2vh 1.2vw;
                         display: flex; flex-direction: column; align-items: center; justify-content: center;
-                        text-align: center; flex: 0 0 auto; gap: .6vh;
+                        text-align: center; flex: 0 0 auto; gap: .5vh;
                     }
-                    .op-epp .icon { font-size: clamp(28px, 4vw, 64px); line-height: 1; }
-                    .op-epp .txt { font-size: clamp(16px, 1.8vw, 34px); font-weight: 800; }
+                    .op-epp .icon { font-size: clamp(26px, 3.4vw, 56px); line-height: 1; }
+                    .op-epp .txt { font-size: clamp(15px, 1.7vw, 32px); font-weight: 800; }
+                    .op-ban2 {
+                        background: #212b3a; border: 2px solid #d32f2f; color: #fff; border-radius: 10px;
+                        padding: 1vh 1.2vw; display: flex; align-items: center; justify-content: center;
+                        gap: .8vw; text-align: center; flex: 0 0 auto;
+                    }
+                    .op-ban2 .icon { font-size: clamp(24px, 3vw, 48px); line-height: 1; }
+                    .op-ban2 .txt { font-size: clamp(14px, 1.5vw, 28px); font-weight: 800; }
+                    .op-today {
+                        background: var(--panel); border: 1px solid var(--grid-line); border-radius: 10px;
+                        flex: 1 1 0; display: flex; flex-direction: column; overflow: hidden;
+                    }
+                    .op-today .ot-title {
+                        background: var(--accent); color: #fff; padding: .7vh 1.2vw;
+                        font-size: clamp(14px, 1.5vw, 26px); font-weight: 800; letter-spacing: .5px;
+                    }
+                    .op-today .ot-body { padding: .8vh 1vw; display: flex; flex-direction: column; gap: .6vh; overflow: auto; }
+                    .op-today .ot-item {
+                        color: #fff; border-radius: 8px; padding: .5vh 1vw;
+                        font-size: clamp(14px, 1.5vw, 28px); font-weight: 700; line-height: 1.15;
+                    }
+                    .op-today .ot-item .d { font-size: clamp(11px, 1vw, 18px); font-weight: 400; opacity: .9; }
+                    .op-today .ot-empty { color: var(--muted); padding: 1vh 1vw; font-size: clamp(13px, 1.3vw, 24px); }
                     .op-notice {
                         background: var(--panel); border: 1px solid var(--grid-line); border-radius: 10px;
-                        flex: 1 1 auto; display: flex; flex-direction: column; overflow: hidden;
+                        flex: 1 1 0; display: flex; flex-direction: column; overflow: hidden;
                     }
                     .op-notice .n-title {
                         background: #f9a825; color: #1a2233; padding: .8vh 1.2vw;
@@ -182,6 +204,29 @@
                             <div class="op-epp">
                                 <div class="icon">&#9888;</div>
                                 <div class="txt" t-esc="epp_message"/>
+                            </div>
+                            <t t-if="epp_message2">
+                                <div class="op-ban2">
+                                    <div class="icon">&#128683;</div>
+                                    <div class="txt" t-esc="epp_message2"/>
+                                </div>
+                            </t>
+                            <div class="op-today">
+                                <div class="ot-title">TAREAS DE HOY</div>
+                                <div class="ot-body">
+                                    <t t-foreach="today_tasks" t-as="task">
+                                        <div t-attf-class="ot-item#{' done' if task['done'] else ''}"
+                                             t-attf-style="background:#{task['color']}">
+                                            <span t-esc="task['name']"/>
+                                            <t t-if="task['description']">
+                                                <div class="d" t-esc="task['description']"/>
+                                            </t>
+                                        </div>
+                                    </t>
+                                    <t t-if="not today_tasks">
+                                        <div class="ot-empty">Sin tareas para hoy.</div>
+                                    </t>
+                                </div>
                             </div>
                             <div class="op-notice">
                                 <div class="n-title">AVISOS</div>

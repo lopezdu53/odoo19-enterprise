@@ -58,17 +58,24 @@
                     <!-- Cronograma principal -->
                     <group string="Opciones del calendario"
                            invisible="template_type != 'schedule'">
-                        <field name="week_start"/>
+                        <field name="schedule_range"/>
+                        <field name="week_start" invisible="schedule_range != 'month'"/>
                         <field name="show_weekends"/>
                     </group>
 
                     <!-- Operario -->
                     <group invisible="template_type != 'operator'">
                         <group string="Operario">
+                            <field name="employee_id"/>
                             <field name="operator_name"/>
-                            <field name="epp_message"/>
+                            <field name="task_board_id"
+                                   options="{'no_create': True}"/>
                         </group>
-                        <group string="Avisos (horas extra / cambios)">
+                        <group string="Mensajes de seguridad">
+                            <field name="epp_message"/>
+                            <field name="epp_message2"/>
+                        </group>
+                        <group string="Avisos (horas extra / cambios)" colspan="2">
                             <field name="notice_message" nolabel="1"
                                    placeholder="Ej: Hoy pausa activa a las 9:45. Horas extra hasta las 6:00 pm."/>
                         </group>
