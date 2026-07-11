@@ -1,7 +1,7 @@
 import calendar
+import re
+import urllib.parse
 from datetime import date, timedelta
-
-from markupsafe import Markup
 
 from odoo import fields, http
 from odoo.http import request
@@ -16,7 +16,7 @@ MONTHS_ES = [
 WEEKDAYS_ES = ['Lunes', 'Martes', 'Miercoles', 'Jueves', 'Viernes', 'Sabado', 'Domingo']
 
 # Cuantas tareas se muestran como maximo por dia antes de resumir con "+N".
-MAX_TASKS_PER_DAY = 5
+MAX_TASKS_PER_DAY = 4
 
 
 class TvCalendarController(http.Controller):
@@ -29,12 +29,78 @@ class TvCalendarController(http.Controller):
         if not board:
             return request.not_found()
 
+        now_label = fields.Datetime.context_timestamp(
+            board, fields.Datetime.now()).strftime('%d/%m/%Y %H:%M')
+
+        if board.template_type == 'ad':
+            playlist_id = self._extract_playlist_id(board.youtube_url or '')
+            embed_url = False
+            if playlist_id:
+                embed_url = (
+                    'https://www.youtube-nocookie.com/embed/videoseries'
+                    '?list=%s&autoplay=1&mute=1&loop=1&controls=1&rel=0'
+                    '&modestbranding=1' % playlist_id)
+            return self._render(board, 'tv_calendar.kiosk_ad', {
+                'board': board,
+                'embed_url': embed_url,
+                'now_label': now_label,
+            }, allow_youtube=True)
+
+        today = fields.Date.context_today(board)
+        common = {
+            'board': board,
+            'theme': board.theme,
+            'template_type': board.template_type,
+            'refresh_interval': board.refresh_interval or 0,
+            'now_label': now_label,
+            'month_name': MONTHS_ES[today.month - 1],
+            'year': today.year,
+        }
+
+        if board.template_type == 'operator':
+            common.update({
+                'operator_name': board.operator_name or '',
+                'epp_message': board.epp_message or '',
+                'notice_message': board.notice_message or '',
+                'slots': [{
+                    'time': s.time_label or '',
+                    'activity': s.activity or '',
+                    'color': s.slot_color(),
+                } for s in board.time_slot_ids],
+                'today_label': ('%s de %s de %s'
+                                % (today.day, MONTHS_ES[today.month - 1], today.year)),
+            })
+            return self._render(board, 'tv_calendar.kiosk_page', common)
+
+        # --- Plantilla Cronograma principal ---
+        common.update(self._schedule_values(board, today, offset))
+        return self._render(board, 'tv_calendar.kiosk_page', common)
+
+    # ------------------------------------------------------------------
+    # Render helper
+    # ------------------------------------------------------------------
+    @staticmethod
+    def _render(board, template, values, allow_youtube=False):
+        html = request.env['ir.qweb']._render(template, values)
+        headers = [
+            ('Content-Type', 'text/html; charset=utf-8'),
+            ('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0'),
+        ]
+        if allow_youtube:
+            headers.append((
+                'Content-Security-Policy',
+                "frame-src https://www.youtube.com https://www.youtube-nocookie.com;",
+            ))
+        return request.make_response('<!DOCTYPE html>\n' + str(html), headers=headers)
+
+    # ------------------------------------------------------------------
+    # Cronograma principal
+    # ------------------------------------------------------------------
+    def _schedule_values(self, board, today, offset):
         try:
             offset = int(offset)
         except (TypeError, ValueError):
             offset = 0
-
-        today = fields.Date.context_today(board)
         year, month = self._shift_month(today.year, today.month, offset)
 
         week_start = int(board.week_start or '0')
@@ -45,7 +111,6 @@ class TvCalendarController(http.Controller):
 
         tasks_by_day = self._tasks_by_day(board, grid_start, grid_end)
 
-        # Columnas de dias visibles (se pueden ocultar los fines de semana).
         weekday_order = [(week_start + i) % 7 for i in range(7)]
         if not board.show_weekends:
             weekday_order = [d for d in weekday_order if d < 5]
@@ -61,7 +126,6 @@ class TvCalendarController(http.Controller):
                     tasks_by_day.get(day, []),
                     key=lambda t: (-t.importance_rank, t.name or ''))
                 days.append({
-                    'date': day,
                     'day_num': day.day,
                     'in_month': day.month == month,
                     'is_today': day == today,
@@ -71,7 +135,6 @@ class TvCalendarController(http.Controller):
                 })
             weeks.append(days)
 
-        # Resumen por importancia (solo tareas del mes en curso).
         legend = []
         for key in ('critical', 'high', 'normal', 'low'):
             level = IMPORTANCE_LEVELS[key]
@@ -81,42 +144,22 @@ class TvCalendarController(http.Controller):
                 and t.date.year == year)
             legend.append({'label': level['label'], 'color': level['color'], 'count': count})
 
-        values = {
-            'board': board,
+        return {
             'month_name': MONTHS_ES[month - 1],
             'year': year,
             'weekday_names': weekday_names,
             'num_columns': len(weekday_names),
             'weeks': weeks,
             'legend': legend,
-            'refresh_interval': board.refresh_interval or 0,
-            'now_label': fields.Datetime.context_timestamp(
-                board, fields.Datetime.now()).strftime('%d/%m/%Y %H:%M'),
-            'theme': board.theme,
         }
 
-        html = request.env['ir.qweb']._render('tv_calendar.kiosk_page', values)
-        response = request.make_response(
-            '<!DOCTYPE html>\n' + str(html),
-            headers=[
-                ('Content-Type', 'text/html; charset=utf-8'),
-                ('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0'),
-            ])
-        return response
-
-    # ------------------------------------------------------------------
-    # Helpers
-    # ------------------------------------------------------------------
     @staticmethod
     def _shift_month(year, month, offset):
-        # month es 1..12; lo pasamos a base 0 para poder sumar offset.
         index = (year * 12 + (month - 1)) + offset
         return index // 12, (index % 12) + 1
 
     @staticmethod
     def _tasks_by_day(board, grid_start, grid_end):
-        # Una tarea ocupa [date, date_end or date]. Se solapa con la rejilla
-        # visible si date <= grid_end y (fin) >= grid_start.
         domain = [
             ('board_id', '=', board.id),
             ('date', '<=', grid_end),
@@ -143,8 +186,26 @@ class TvCalendarController(http.Controller):
     def _task_vals(task):
         return {
             'name': task.name,
+            'description': task.description or '',
             'color': task.importance_hex(),
             'importance': task.importance_display(),
             'done': task.done,
             'user': task.user_id.name or '',
         }
+
+    # ------------------------------------------------------------------
+    # Publicidad
+    # ------------------------------------------------------------------
+    @staticmethod
+    def _extract_playlist_id(url):
+        if not url:
+            return False
+        url = url.strip()
+        if 'list=' in url:
+            params = urllib.parse.parse_qs(urllib.parse.urlparse(url).query)
+            if params.get('list'):
+                return params['list'][0]
+        # Puede que hayan pegado directamente el ID de la playlist.
+        if re.match(r'^[A-Za-z0-9_-]{12,}$', url):
+            return url
+        return False

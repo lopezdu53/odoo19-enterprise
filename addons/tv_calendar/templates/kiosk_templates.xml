@@ -1,5 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
+    <!-- ================================================================ -->
+    <!-- Plantillas 1 (Cronograma) y 2 (Operario): comparten head/estilos -->
+    <!-- ================================================================ -->
     <template id="kiosk_page" name="TV Calendar Kiosk">
         <html t-att-lang="'es'">
             <head>
@@ -11,197 +14,244 @@
                 <title t-esc="board.name"/>
                 <style>
                     :root {
-                        --bg: #eef1f5;
-                        --panel: #ffffff;
-                        --ink: #1a2233;
-                        --muted: #7a8699;
-                        --grid-line: #d5dbe4;
-                        --today: #0b57d0;
-                        --header-bg: #0b1f3a;
-                        --header-ink: #ffffff;
-                        --out-month: #f4f6f9;
-                        --weekend: #f7f9fc;
+                        --bg: #eef1f5; --panel: #ffffff; --ink: #1a2233;
+                        --muted: #7a8699; --grid-line: #d5dbe4; --today: #0b57d0;
+                        --header-bg: #0b1f3a; --header-ink: #ffffff;
+                        --out-month: #f4f6f9; --weekend: #f7f9fc; --accent: #0b57d0;
                     }
                     body.theme-dark {
-                        --bg: #0c1220;
-                        --panel: #131c2e;
-                        --ink: #eef2f8;
-                        --muted: #93a1b8;
-                        --grid-line: #26324a;
-                        --today: #4f8cff;
-                        --header-bg: #050b16;
-                        --header-ink: #ffffff;
-                        --out-month: #0e1626;
-                        --weekend: #101a2c;
+                        --bg: #0c1220; --panel: #131c2e; --ink: #eef2f8;
+                        --muted: #93a1b8; --grid-line: #26324a; --today: #4f8cff;
+                        --header-bg: #050b16; --header-ink: #ffffff;
+                        --out-month: #0e1626; --weekend: #101a2c; --accent: #4f8cff;
                     }
                     * { box-sizing: border-box; margin: 0; padding: 0; }
                     html, body { height: 100%; }
                     body {
-                        background: var(--bg);
-                        color: var(--ink);
+                        background: var(--bg); color: var(--ink);
                         font-family: "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-                        height: 100vh;
-                        display: flex;
-                        flex-direction: column;
-                        overflow: hidden;
-                        -webkit-font-smoothing: antialiased;
+                        height: 100vh; display: flex; flex-direction: column;
+                        overflow: hidden; -webkit-font-smoothing: antialiased;
                     }
                     header.tvc-header {
-                        background: var(--header-bg);
-                        color: var(--header-ink);
-                        display: flex;
-                        align-items: center;
-                        justify-content: space-between;
-                        padding: 1.2vh 2vw;
-                        flex: 0 0 auto;
+                        background: var(--header-bg); color: var(--header-ink);
+                        display: flex; align-items: center; justify-content: space-between;
+                        padding: 1.2vh 2vw; flex: 0 0 auto; gap: 1vw;
                     }
-                    .tvc-title { display: flex; align-items: baseline; gap: 1.2vw; }
-                    .tvc-month { font-size: clamp(22px, 3.4vw, 56px); font-weight: 800; letter-spacing: .3px; }
+                    .tvc-title { display: flex; align-items: baseline; gap: 1.2vw; flex-wrap: wrap; }
+                    .tvc-month { font-size: clamp(22px, 3.2vw, 54px); font-weight: 800; }
                     .tvc-year { font-size: clamp(16px, 1.8vw, 30px); font-weight: 400; opacity: .7; }
                     .tvc-board { font-size: clamp(13px, 1.3vw, 22px); opacity: .8; }
-                    .tvc-legend { display: flex; gap: 1.4vw; align-items: center; flex-wrap: wrap; }
+                    .tvc-right { display: flex; gap: 1.4vw; align-items: center; flex-wrap: wrap; }
+                    .tvc-legend { display: flex; gap: 1.2vw; align-items: center; flex-wrap: wrap; }
                     .tvc-legend .item { display: flex; align-items: center; gap: .5vw; font-size: clamp(12px, 1.1vw, 20px); }
                     .tvc-legend .dot { width: 1.1vw; height: 1.1vw; min-width: 12px; min-height: 12px; border-radius: 50%; }
                     .tvc-legend .cnt { font-weight: 700; }
-                    .tvc-clock { font-size: clamp(13px, 1.3vw, 24px); font-weight: 600; opacity: .85; white-space: nowrap; }
-
-                    .tvc-weekdays {
-                        display: grid;
-                        gap: 2px;
-                        padding: 4px 4px 0 4px;
-                        flex: 0 0 auto;
+                    .tvc-clock { font-size: clamp(13px, 1.3vw, 24px); font-weight: 600; opacity: .9; white-space: nowrap; }
+                    .op-chip {
+                        background: var(--accent); color: #fff; font-weight: 800;
+                        padding: .5vh 1.1vw; border-radius: 999px;
+                        font-size: clamp(15px, 1.6vw, 30px); white-space: nowrap;
                     }
+
+                    /* -------- Cronograma -------- */
+                    .tvc-weekdays { display: grid; gap: 2px; padding: 4px 4px 0 4px; flex: 0 0 auto; }
                     .tvc-weekdays .wd {
-                        text-align: center;
-                        font-size: clamp(12px, 1.3vw, 24px);
-                        font-weight: 700;
-                        text-transform: uppercase;
-                        letter-spacing: .5px;
-                        color: var(--muted);
-                        padding: .6vh 0;
+                        text-align: center; font-size: clamp(12px, 1.3vw, 24px);
+                        font-weight: 700; text-transform: uppercase; letter-spacing: .5px;
+                        color: var(--muted); padding: .6vh 0;
                     }
-
-                    .tvc-grid {
-                        display: grid;
-                        gap: 2px;
-                        padding: 0 4px 4px 4px;
-                        flex: 1 1 auto;
-                        min-height: 0;
-                    }
+                    .tvc-grid { display: grid; gap: 2px; padding: 0 4px 4px 4px; flex: 1 1 auto; min-height: 0; }
                     .tvc-cell {
-                        background: var(--panel);
-                        border: 1px solid var(--grid-line);
-                        border-radius: 8px;
-                        padding: .5vh .5vw;
-                        display: flex;
-                        flex-direction: column;
-                        min-height: 0;
-                        overflow: hidden;
+                        background: var(--panel); border: 1px solid var(--grid-line);
+                        border-radius: 8px; padding: .5vh .5vw; display: flex;
+                        flex-direction: column; min-height: 0; overflow: hidden;
                     }
                     .tvc-cell.out { background: var(--out-month); }
                     .tvc-cell.out .daynum { opacity: .35; }
                     .tvc-cell.weekend { background: var(--weekend); }
-                    .tvc-cell.today {
-                        border-color: var(--today);
-                        box-shadow: inset 0 0 0 3px var(--today);
-                    }
+                    .tvc-cell.today { border-color: var(--today); box-shadow: inset 0 0 0 3px var(--today); }
                     .tvc-cell .daynum {
-                        font-size: clamp(15px, 1.6vw, 30px);
-                        font-weight: 700;
-                        line-height: 1;
-                        margin-bottom: .4vh;
-                        display: flex;
-                        justify-content: flex-end;
+                        font-size: clamp(15px, 1.6vw, 30px); font-weight: 700; line-height: 1;
+                        margin-bottom: .4vh; display: flex; justify-content: flex-end;
                     }
                     .tvc-cell.today .daynum { color: var(--today); }
-                    .tvc-cell .daynum .badge {
-                        background: var(--today);
-                        color: #fff;
-                        border-radius: 999px;
-                        padding: .2vh .8vw;
-                    }
-
+                    .tvc-cell .daynum .badge { background: var(--today); color: #fff; border-radius: 999px; padding: .2vh .8vw; }
                     .tvc-tasks { display: flex; flex-direction: column; gap: .5vh; overflow: hidden; }
                     .tvc-task {
-                        color: #fff;
-                        border-radius: 6px;
-                        padding: .35vh .6vw;
-                        font-size: clamp(12px, 1.15vw, 22px);
-                        font-weight: 600;
-                        line-height: 1.15;
-                        white-space: nowrap;
-                        overflow: hidden;
-                        text-overflow: ellipsis;
-                        display: flex;
-                        align-items: center;
-                        gap: .4vw;
+                        color: #fff; border-radius: 6px; padding: .4vh .6vw;
+                        line-height: 1.15; overflow: hidden;
+                    }
+                    .tvc-task .t-name {
+                        font-size: clamp(12px, 1.15vw, 22px); font-weight: 700;
+                        white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+                        display: flex; align-items: center; gap: .4vw;
+                    }
+                    .tvc-task .t-desc {
+                        font-size: clamp(10px, .85vw, 16px); font-weight: 400; opacity: .92;
+                        white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: .1vh;
                     }
                     .tvc-task.done { opacity: .55; text-decoration: line-through; }
                     .tvc-task .check { font-weight: 800; }
-                    .tvc-overflow {
-                        font-size: clamp(11px, 1vw, 18px);
-                        font-weight: 700;
-                        color: var(--muted);
-                        padding-left: .3vw;
+                    .tvc-overflow { font-size: clamp(11px, 1vw, 18px); font-weight: 700; color: var(--muted); padding-left: .3vw; }
+
+                    /* -------- Operario -------- */
+                    .op-main { flex: 1 1 auto; display: flex; min-height: 0; gap: 6px; padding: 6px; }
+                    .op-left { flex: 7 1 0; min-width: 0; display: flex; flex-direction: column;
+                        background: var(--panel); border: 1px solid var(--grid-line); border-radius: 10px; overflow: hidden; }
+                    .op-left .op-caption {
+                        background: var(--header-bg); color: #fff; padding: .8vh 1.2vw;
+                        font-size: clamp(15px, 1.6vw, 28px); font-weight: 700; letter-spacing: .5px;
                     }
-                    .tvc-empty { display: none; }
+                    .op-schedule { flex: 1 1 auto; display: flex; flex-direction: column; min-height: 0; }
+                    .op-row {
+                        flex: 1 1 0; display: flex; align-items: center; gap: 1vw;
+                        padding: 0 1.2vw; border-bottom: 1px solid var(--grid-line); min-height: 0;
+                    }
+                    .op-row:last-child { border-bottom: 0; }
+                    .op-time {
+                        flex: 0 0 22%; font-size: clamp(16px, 1.9vw, 36px); font-weight: 800;
+                        color: var(--accent); font-variant-numeric: tabular-nums;
+                    }
+                    .op-act { flex: 1 1 auto; font-size: clamp(15px, 1.7vw, 32px); font-weight: 700;
+                        white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+                    .op-act.pill { color: #fff; border-radius: 8px; padding: .5vh 1vw; display: inline-block; }
+                    .op-right { flex: 3 1 0; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
+                    .op-epp {
+                        background: #d32f2f; color: #fff; border-radius: 10px; padding: 1.6vh 1.2vw;
+                        display: flex; flex-direction: column; align-items: center; justify-content: center;
+                        text-align: center; flex: 0 0 auto; gap: .6vh;
+                    }
+                    .op-epp .icon { font-size: clamp(28px, 4vw, 64px); line-height: 1; }
+                    .op-epp .txt { font-size: clamp(16px, 1.8vw, 34px); font-weight: 800; }
+                    .op-notice {
+                        background: var(--panel); border: 1px solid var(--grid-line); border-radius: 10px;
+                        flex: 1 1 auto; display: flex; flex-direction: column; overflow: hidden;
+                    }
+                    .op-notice .n-title {
+                        background: #f9a825; color: #1a2233; padding: .8vh 1.2vw;
+                        font-size: clamp(15px, 1.6vw, 28px); font-weight: 800; letter-spacing: .5px;
+                    }
+                    .op-notice .n-body {
+                        padding: 1.2vh 1.2vw; font-size: clamp(15px, 1.5vw, 30px); font-weight: 600;
+                        white-space: pre-wrap; overflow: auto; line-height: 1.35;
+                    }
+                    .op-notice .n-empty { color: var(--muted); font-weight: 400; }
                 </style>
             </head>
             <body t-attf-class="theme-#{theme}">
-                <header class="tvc-header">
-                    <div class="tvc-title">
-                        <span class="tvc-month" t-esc="month_name"/>
-                        <span class="tvc-year" t-esc="year"/>
-                        <span class="tvc-board" t-esc="board.name"/>
-                    </div>
-                    <div class="tvc-legend">
-                        <t t-foreach="legend" t-as="lg">
-                            <div class="item">
-                                <span class="dot" t-attf-style="background:#{lg['color']}"/>
-                                <span t-esc="lg['label']"/>
-                                <span class="cnt" t-esc="lg['count']"/>
+                <t t-if="template_type == 'operator'">
+                    <!-- ======================= OPERARIO ======================= -->
+                    <header class="tvc-header">
+                        <div class="tvc-title">
+                            <span class="tvc-month" t-esc="month_name"/>
+                            <span class="tvc-year" t-esc="year"/>
+                            <span class="tvc-board" t-esc="board.name"/>
+                        </div>
+                        <div class="tvc-right">
+                            <t t-if="operator_name">
+                                <span class="op-chip">Operario: <t t-esc="operator_name"/></span>
+                            </t>
+                            <span class="tvc-clock" id="tvc-clock" t-esc="now_label"/>
+                        </div>
+                    </header>
+                    <div class="op-main">
+                        <div class="op-left">
+                            <div class="op-caption">HORARIO DEL DIA — <t t-esc="today_label"/></div>
+                            <div class="op-schedule">
+                                <t t-foreach="slots" t-as="slot">
+                                    <div class="op-row">
+                                        <div class="op-time" t-esc="slot['time']"/>
+                                        <t t-if="slot['activity']">
+                                            <div class="op-act pill" t-attf-style="background:#{slot['color']}"
+                                                 t-esc="slot['activity']"/>
+                                        </t>
+                                        <t t-else="">
+                                            <div class="op-act" style="opacity:.35">—</div>
+                                        </t>
+                                    </div>
+                                </t>
+                                <t t-if="not slots">
+                                    <div class="op-row"><div class="op-act" style="opacity:.5">
+                                        Sin horario. Usa el boton "Cargar horario estandar" en el tablero.
+                                    </div></div>
+                                </t>
                             </div>
-                        </t>
-                        <span class="tvc-clock" id="tvc-clock" t-esc="now_label"/>
-                    </div>
-                </header>
-
-                <div class="tvc-weekdays" t-attf-style="grid-template-columns: repeat(#{num_columns}, 1fr);">
-                    <t t-foreach="weekday_names" t-as="wd">
-                        <div class="wd" t-esc="wd"/>
-                    </t>
-                </div>
-
-                <div class="tvc-grid"
-                     t-attf-style="grid-template-columns: repeat(#{num_columns}, 1fr); grid-template-rows: repeat(#{len(weeks)}, 1fr);">
-                    <t t-foreach="weeks" t-as="week">
-                        <t t-foreach="week" t-as="day">
-                            <div t-attf-class="tvc-cell#{' out' if not day['in_month'] else ''}#{' today' if day['is_today'] else ''}#{' weekend' if day['is_weekend'] else ''}">
-                                <div class="daynum">
-                                    <t t-if="day['is_today']">
-                                        <span class="badge" t-esc="day['day_num']"/>
-                                    </t>
-                                    <t t-else="">
-                                        <span t-esc="day['day_num']"/>
-                                    </t>
-                                </div>
-                                <div class="tvc-tasks">
-                                    <t t-foreach="day['tasks']" t-as="task">
-                                        <div t-attf-class="tvc-task#{' done' if task['done'] else ''}"
-                                             t-attf-style="background:#{task['color']}"
-                                             t-att-title="task['name']">
-                                            <t t-if="task['done']"><span class="check">&#10003;</span></t>
-                                            <span t-esc="task['name']"/>
-                                        </div>
-                                    </t>
-                                    <t t-if="day['overflow']">
-                                        <div class="tvc-overflow">+<t t-esc="day['overflow']"/> mas</div>
-                                    </t>
-                                </div>
+                        </div>
+                        <div class="op-right">
+                            <div class="op-epp">
+                                <div class="icon">&#9888;</div>
+                                <div class="txt" t-esc="epp_message"/>
                             </div>
+                            <div class="op-notice">
+                                <div class="n-title">AVISOS</div>
+                                <t t-if="notice_message">
+                                    <div class="n-body" t-esc="notice_message"/>
+                                </t>
+                                <t t-else="">
+                                    <div class="n-body n-empty">Sin avisos. (Horas extra, cambios de almuerzo o pausa activa se muestran aqui.)</div>
+                                </t>
+                            </div>
+                        </div>
+                    </div>
+                </t>
+                <t t-else="">
+                    <!-- ======================= CRONOGRAMA ======================= -->
+                    <header class="tvc-header">
+                        <div class="tvc-title">
+                            <span class="tvc-month" t-esc="month_name"/>
+                            <span class="tvc-year" t-esc="year"/>
+                            <span class="tvc-board" t-esc="board.name"/>
+                        </div>
+                        <div class="tvc-right">
+                            <div class="tvc-legend">
+                                <t t-foreach="legend" t-as="lg">
+                                    <div class="item">
+                                        <span class="dot" t-attf-style="background:#{lg['color']}"/>
+                                        <span t-esc="lg['label']"/>
+                                        <span class="cnt" t-esc="lg['count']"/>
+                                    </div>
+                                </t>
+                            </div>
+                            <span class="tvc-clock" id="tvc-clock" t-esc="now_label"/>
+                        </div>
+                    </header>
+                    <div class="tvc-weekdays" t-attf-style="grid-template-columns: repeat(#{num_columns}, 1fr);">
+                        <t t-foreach="weekday_names" t-as="wd">
+                            <div class="wd" t-esc="wd"/>
                         </t>
-                    </t>
-                </div>
+                    </div>
+                    <div class="tvc-grid"
+                         t-attf-style="grid-template-columns: repeat(#{num_columns}, 1fr); grid-template-rows: repeat(#{len(weeks)}, 1fr);">
+                        <t t-foreach="weeks" t-as="week">
+                            <t t-foreach="week" t-as="day">
+                                <div t-attf-class="tvc-cell#{' out' if not day['in_month'] else ''}#{' today' if day['is_today'] else ''}#{' weekend' if day['is_weekend'] else ''}">
+                                    <div class="daynum">
+                                        <t t-if="day['is_today']"><span class="badge" t-esc="day['day_num']"/></t>
+                                        <t t-else=""><span t-esc="day['day_num']"/></t>
+                                    </div>
+                                    <div class="tvc-tasks">
+                                        <t t-foreach="day['tasks']" t-as="task">
+                                            <div t-attf-class="tvc-task#{' done' if task['done'] else ''}"
+                                                 t-attf-style="background:#{task['color']}">
+                                                <div class="t-name">
+                                                    <t t-if="task['done']"><span class="check">&#10003;</span></t>
+                                                    <span t-esc="task['name']"/>
+                                                </div>
+                                                <t t-if="task['description']">
+                                                    <div class="t-desc" t-esc="task['description']"/>
+                                                </t>
+                                            </div>
+                                        </t>
+                                        <t t-if="day['overflow']">
+                                            <div class="tvc-overflow">+<t t-esc="day['overflow']"/> mas</div>
+                                        </t>
+                                    </div>
+                                </div>
+                            </t>
+                        </t>
+                    </div>
+                </t>
 
                 <script type="text/javascript">
                     (function () {
@@ -213,10 +263,50 @@
                             el.textContent = pad(d.getDate()) + '/' + pad(d.getMonth() + 1) + '/' +
                                 d.getFullYear() + ' ' + pad(d.getHours()) + ':' + pad(d.getMinutes());
                         }
-                        tick();
-                        setInterval(tick, 15000);
+                        tick(); setInterval(tick, 15000);
                     })();
                 </script>
+            </body>
+        </html>
+    </template>
+
+    <!-- ================================================================ -->
+    <!-- Plantilla 3: Publicidad (playlist de YouTube a pantalla completa) -->
+    <!-- ================================================================ -->
+    <template id="kiosk_ad" name="TV Calendar Ad">
+        <html t-att-lang="'es'">
+            <head>
+                <meta charset="utf-8"/>
+                <meta name="viewport" content="width=device-width, initial-scale=1"/>
+                <title t-esc="board.name"/>
+                <style>
+                    * { box-sizing: border-box; margin: 0; padding: 0; }
+                    html, body { height: 100%; width: 100%; background: #000; overflow: hidden; }
+                    iframe { border: 0; width: 100vw; height: 100vh; display: block; }
+                    .ad-empty {
+                        color: #fff; height: 100vh; display: flex; align-items: center;
+                        justify-content: center; text-align: center; padding: 5vw;
+                        font-family: "Segoe UI", Roboto, Arial, sans-serif;
+                        font-size: clamp(18px, 2.4vw, 40px); line-height: 1.5;
+                    }
+                </style>
+            </head>
+            <body>
+                <t t-if="embed_url">
+                    <iframe t-att-src="embed_url"
+                            allow="autoplay; encrypted-media; fullscreen"
+                            allowfullscreen="allowfullscreen"/>
+                </t>
+                <t t-else="">
+                    <div class="ad-empty">
+                        <div>
+                            <p>Configura la <b>URL de la playlist de YouTube</b> en el tablero.</p>
+                            <p style="opacity:.6; font-size:.6em; margin-top:1em;">
+                                Debe contener <code>list=...</code> (una lista de reproduccion, no un solo video).
+                            </p>
+                        </div>
+                    </div>
+                </t>
             </body>
         </html>
     </template>

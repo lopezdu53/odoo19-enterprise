@@ -6,6 +6,7 @@
         <field name="arch" type="xml">
             <list string="Tableros TV">
                 <field name="name"/>
+                <field name="template_type"/>
                 <field name="task_count" string="Tareas"/>
                 <field name="refresh_interval"/>
                 <field name="theme"/>
@@ -25,11 +26,15 @@
                             string="Regenerar URL"
                             confirm="Se invalidara la URL actual del TV. Tendras que volver a abrirla en la pantalla. Continuar?"
                             icon="fa-refresh"/>
+                    <button name="action_load_standard_schedule" type="object"
+                            string="Cargar horario estandar" icon="fa-clock-o"
+                            invisible="template_type != 'operator'"/>
                 </header>
                 <sheet>
                     <div class="oe_button_box" name="button_box">
                         <button name="action_view_tasks" type="object"
-                                class="oe_stat_button" icon="fa-tasks">
+                                class="oe_stat_button" icon="fa-tasks"
+                                invisible="template_type != 'schedule'">
                             <field name="task_count" widget="statinfo" string="Tareas"/>
                         </button>
                     </div>
@@ -38,17 +43,54 @@
                         <h1><field name="name" placeholder="Ej: Cronograma Produccion"/></h1>
                     </div>
                     <group>
-                        <group string="Visualizacion en el TV">
+                        <group string="General">
+                            <field name="template_type"/>
                             <field name="theme"/>
-                            <field name="week_start"/>
-                            <field name="show_weekends"/>
-                            <field name="refresh_interval"/>
+                            <field name="refresh_interval"
+                                   invisible="template_type == 'ad'"/>
                         </group>
                         <group string="Acceso del TV">
                             <field name="kiosk_url" widget="CopyClipboardChar"/>
                             <field name="active"/>
                         </group>
                     </group>
+
+                    <!-- Cronograma principal -->
+                    <group string="Opciones del calendario"
+                           invisible="template_type != 'schedule'">
+                        <field name="week_start"/>
+                        <field name="show_weekends"/>
+                    </group>
+
+                    <!-- Operario -->
+                    <group invisible="template_type != 'operator'">
+                        <group string="Operario">
+                            <field name="operator_name"/>
+                            <field name="epp_message"/>
+                        </group>
+                        <group string="Avisos (horas extra / cambios)">
+                            <field name="notice_message" nolabel="1"
+                                   placeholder="Ej: Hoy pausa activa a las 9:45. Horas extra hasta las 6:00 pm."/>
+                        </group>
+                    </group>
+                    <group string="Horario del turno"
+                           invisible="template_type != 'operator'">
+                        <field name="time_slot_ids" nolabel="1">
+                            <list editable="bottom">
+                                <field name="sequence" widget="handle"/>
+                                <field name="time_label"/>
+                                <field name="activity"/>
+                            </list>
+                        </field>
+                    </group>
+
+                    <!-- Publicidad -->
+                    <group string="Publicidad (YouTube)"
+                           invisible="template_type != 'ad'">
+                        <field name="youtube_url"
+                               placeholder="https://www.youtube.com/playlist?list=PLxxxxxxxx"/>
+                    </group>
+
                     <div class="alert alert-info" role="alert">
                         Abre la URL del TV en el navegador de la pantalla (modo pantalla
                         completa). No pide inicio de sesion: cualquiera con la URL puede

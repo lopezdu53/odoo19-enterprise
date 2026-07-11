@@ -3,3 +3,4 @@ access_tv_calendar_task_user,tv.calendar.task.user,model_tv_calendar_task,base.g
 access_tv_calendar_board_user,tv.calendar.board.user,model_tv_calendar_board,base.group_user,1,1,1,1
 access_tv_calendar_board_manager,tv.calendar.board.manager,model_tv_calendar_board,tv_calendar.group_tv_calendar_manager,1,1,1,1
 access_tv_calendar_task_manager,tv.calendar.task.manager,model_tv_calendar_task,tv_calendar.group_tv_calendar_manager,1,1,1,1
+access_tv_calendar_time_slot_user,tv.calendar.time.slot.user,model_tv_calendar_time_slot,base.group_user,1,1,1,1

@@ -2,6 +2,24 @@ import secrets
 
 from odoo import api, fields, models
 
+# Horario de turno por defecto para la plantilla Operario.
+STANDARD_SCHEDULE = [
+    ('7:15 am', 'INGRESO'),
+    ('7:27 am', 'OPERARIO EN EL PUESTO DE TRABAJO'),
+    ('7:30 am', ''),
+    ('8:30 am', ''),
+    ('9:30 am', 'PAUSA ACTIVA'),
+    ('10:00 am', ''),
+    ('11:00 am', ''),
+    ('12:00 m', ''),
+    ('1:00 pm', 'ALMUERZO'),
+    ('2:00 pm', ''),
+    ('3:00 pm', ''),
+    ('4:00 pm', ''),
+    ('4:30 pm', 'LIMPIEZA PUESTO DE TRABAJO'),
+    ('4:45 pm', 'SALIDA'),
+]
+
 
 class TvCalendarBoard(models.Model):
     _name = 'tv.calendar.board'
@@ -16,6 +34,18 @@ class TvCalendarBoard(models.Model):
     task_ids = fields.One2many('tv.calendar.task', 'board_id', string='Tareas')
     task_count = fields.Integer(compute='_compute_task_count')
 
+    template_type = fields.Selection(
+        [
+            ('schedule', 'Cronograma principal'),
+            ('operator', 'Operario'),
+            ('ad', 'Publicidad'),
+        ],
+        string='Tipo de plantilla', default='schedule', required=True,
+        help="Que se muestra en el TV:\n"
+             "- Cronograma principal: calendario mensual de tareas.\n"
+             "- Operario: horario del turno + EPP y avisos.\n"
+             "- Publicidad: una lista de reproduccion de YouTube.")
+
     refresh_interval = fields.Integer(
         string='Auto-refresco (segundos)', default=300,
         help="Cada cuantos segundos la pantalla del TV se recarga sola para "
@@ -28,6 +58,22 @@ class TvCalendarBoard(models.Model):
     theme = fields.Selection(
         [('light', 'Claro'), ('dark', 'Oscuro')],
         string='Tema', default='light', required=True)
+
+    # --- Plantilla Operario ---
+    operator_name = fields.Char(string='Nombre del operario')
+    epp_message = fields.Char(
+        string='Mensaje EPP',
+        default='USAR EPP · ELEMENTOS DE PROTECCION PERSONAL')
+    notice_message = fields.Text(
+        string='Avisos',
+        help="Horas extra, cambios de horario de almuerzo o pausa activa, etc.")
+    time_slot_ids = fields.One2many(
+        'tv.calendar.time.slot', 'board_id', string='Horario del turno')
+
+    # --- Plantilla Publicidad ---
+    youtube_url = fields.Char(
+        string='URL de la playlist de YouTube',
+        help="Pega el enlace de la lista de reproduccion (contiene 'list=...').")
 
     kiosk_url = fields.Char(string='URL del TV', compute='_compute_kiosk_url')
 
@@ -65,6 +111,16 @@ class TvCalendarBoard(models.Model):
         """Genera un token nuevo (invalida la URL anterior)."""
         for board in self:
             board.access_token = secrets.token_urlsafe(24)
+        return True
+
+    def action_load_standard_schedule(self):
+        """Carga el horario de turno estandar en la plantilla Operario."""
+        self.ensure_one()
+        self.time_slot_ids.unlink()
+        self.time_slot_ids = [
+            (0, 0, {'sequence': i * 10, 'time_label': t, 'activity': a})
+            for i, (t, a) in enumerate(STANDARD_SCHEDULE)
+        ]
         return True
 
     def action_view_tasks(self):
