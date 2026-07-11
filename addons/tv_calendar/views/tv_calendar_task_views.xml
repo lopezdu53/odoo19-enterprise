@@ -43,8 +43,9 @@
                         </group>
                     </group>
                     <group string="Descripcion">
-                        <field name="description" nolabel="1"
-                               placeholder="Detalles opcionales..."/>
+                        <field name="description" nolabel="1" widget="html"
+                               options="{'height': 300}"
+                               placeholder="Detalles, instrucciones, imagenes..."/>
                     </group>
                 </sheet>
                 <chatter/>

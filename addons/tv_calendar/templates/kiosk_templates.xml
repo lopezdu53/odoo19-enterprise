@@ -108,6 +108,10 @@
                     .big-task.done { opacity: .55; text-decoration: line-through; }
                     .big-task .bt-name { font-size: clamp(20px, 2.6vw, 52px); font-weight: 800; line-height: 1.1; }
                     .big-task .bt-desc { font-size: clamp(14px, 1.5vw, 30px); font-weight: 500; opacity: .95; }
+                    .big-task .bt-desc p { margin: 0 0 .3em 0; }
+                    .big-task .bt-desc p:last-child { margin-bottom: 0; }
+                    .big-task .bt-desc img { max-width: 100%; max-height: 22vh; height: auto; border-radius: 6px; margin: .3em 0; }
+                    .big-task .bt-desc a { color: #fff; text-decoration: underline; }
                     .big-empty { color: var(--muted); padding: 4vh 1.5vw; text-align: center; font-size: clamp(18px, 2vw, 38px); }
 
                     /* Panel estrecho (30%): seguridad + horario + avisos */
@@ -166,8 +170,8 @@
                                     <div t-attf-class="big-task#{' done' if task['done'] else ''}"
                                          t-attf-style="background:#{task['color']}">
                                         <div class="bt-name" t-esc="task['name']"/>
-                                        <t t-if="task['description']">
-                                            <div class="bt-desc" t-esc="task['description']"/>
+                                        <t t-if="task['description_text']">
+                                            <div class="bt-desc" t-out="task['description_html']"/>
                                         </t>
                                     </div>
                                 </t>
@@ -264,8 +268,8 @@
                                                     <t t-if="task['done']"><span class="check">&#10003;</span></t>
                                                     <span t-esc="task['name']"/>
                                                 </div>
-                                                <t t-if="task['description']">
-                                                    <div class="t-desc" t-esc="task['description']"/>
+                                                <t t-if="task['description_text']">
+                                                    <div class="t-desc" t-esc="task['description_text']"/>
                                                 </t>
                                             </div>
                                         </t>

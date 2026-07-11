@@ -5,6 +5,7 @@ from datetime import date, timedelta
 
 from odoo import fields, http
 from odoo.http import request
+from odoo.tools import html2plaintext
 
 from ..models.tv_calendar_task import IMPORTANCE_LEVELS
 
@@ -243,9 +244,11 @@ class TvCalendarController(http.Controller):
 
     @staticmethod
     def _task_vals(task):
+        desc_html = task.description or ''
         return {
             'name': task.name,
-            'description': task.description or '',
+            'description_html': desc_html,
+            'description_text': html2plaintext(desc_html) if desc_html else '',
             'color': task.importance_hex(),
             'importance': task.importance_display(),
             'done': task.done,
@@ -264,8 +267,9 @@ class TvCalendarController(http.Controller):
             '&', ('date_end', '!=', False), ('date_end', '>=', today),
             '&', ('date_end', '=', False), ('date', '>=', today),
         ]
+        # Orden de ingreso (cola): la primera creada arriba.
         tasks = request.env['tv.calendar.task'].sudo().search(domain)
-        tasks = tasks.sorted(key=lambda t: (-t.importance_rank, t.name or ''))
+        tasks = tasks.sorted(key=lambda t: t.id)
         return [self._task_vals(t) for t in tasks]
 
     # ------------------------------------------------------------------

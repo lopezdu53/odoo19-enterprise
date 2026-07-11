@@ -51,7 +51,7 @@ class TvCalendarTask(models.Model):
     user_id = fields.Many2one(
         'res.users', string='Responsable',
         default=lambda self: self.env.user, tracking=True)
-    description = fields.Text(string='Descripcion')
+    description = fields.Html(string='Descripcion', sanitize=True)
     done = fields.Boolean(string='Completada', default=False, tracking=True)
 
     @api.depends('importance')
