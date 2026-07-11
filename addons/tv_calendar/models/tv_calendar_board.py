@@ -4,18 +4,11 @@ from odoo import api, fields, models
 
 # Horario de turno por defecto para la plantilla Operario.
 STANDARD_SCHEDULE = [
-    ('7:15 am', 'INGRESO'),
-    ('7:27 am', 'OPERARIO EN EL PUESTO DE TRABAJO'),
-    ('7:30 am', ''),
-    ('8:30 am', ''),
-    ('9:30 am', 'PAUSA ACTIVA'),
-    ('10:00 am', ''),
-    ('11:00 am', ''),
-    ('12:00 m', ''),
-    ('1:00 pm', 'ALMUERZO'),
-    ('2:00 pm', ''),
-    ('3:00 pm', ''),
-    ('4:00 pm', ''),
+    ('7:30 am', 'TAREAS DE HOY'),
+    ('10:00-10:20 am', 'PAUSA ACTIVA'),
+    ('10:20 am', 'TAREAS DE HOY'),
+    ('1:00-2:00 pm', 'ALMUERZO'),
+    ('2:00 pm', 'TAREAS DE HOY'),
     ('4:30 pm', 'LIMPIEZA PUESTO DE TRABAJO'),
     ('4:45 pm', 'SALIDA'),
 ]
