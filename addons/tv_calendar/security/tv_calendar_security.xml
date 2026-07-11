@@ -1,14 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <record id="module_category_tv_calendar" model="ir.module.category">
-        <field name="name">Calendario TV</field>
-        <field name="sequence">20</field>
-    </record>
-
     <record id="group_tv_calendar_manager" model="res.groups">
         <field name="name">Gestor de tableros TV</field>
-        <field name="category_id" ref="module_category_tv_calendar"/>
         <field name="implied_ids" eval="[(4, ref('base.group_user'))]"/>
-        <field name="comment">Puede crear y configurar los tableros (boards) que se proyectan en el TV.</field>
     </record>
 </odoo>
