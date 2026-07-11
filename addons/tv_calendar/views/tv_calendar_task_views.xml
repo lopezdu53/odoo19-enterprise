@@ -75,16 +75,14 @@
                 <field name="board_id"/>
                 <field name="user_id"/>
                 <filter name="pending" string="Pendientes" domain="[('done', '=', False)]"/>
-                <filter name="done" string="Completadas" domain="[('done', '=', True)]"/>
+                <filter name="completed" string="Completadas" domain="[('done', '=', True)]"/>
                 <separator/>
                 <filter name="imp_critical" string="Critica" domain="[('importance', '=', 'critical')]"/>
                 <filter name="imp_high" string="Alta" domain="[('importance', '=', 'high')]"/>
-                <group expand="0" string="Agrupar por">
-                    <filter name="group_board" string="Tablero" context="{'group_by': 'board_id'}"/>
-                    <filter name="group_importance" string="Importancia" context="{'group_by': 'importance'}"/>
-                    <filter name="group_user" string="Responsable" context="{'group_by': 'user_id'}"/>
-                    <filter name="group_date" string="Fecha" context="{'group_by': 'date'}"/>
-                </group>
+                <filter name="group_board" string="Tablero" context="{'group_by': 'board_id'}"/>
+                <filter name="group_importance" string="Importancia" context="{'group_by': 'importance'}"/>
+                <filter name="group_user" string="Responsable" context="{'group_by': 'user_id'}"/>
+                <filter name="group_date" string="Fecha" context="{'group_by': 'date'}"/>
             </search>
         </field>
     </record>
