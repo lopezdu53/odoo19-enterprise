@@ -32,7 +32,7 @@ class TvCalendarController(http.Controller):
             return request.not_found()
 
         now_label = fields.Datetime.context_timestamp(
-            board, fields.Datetime.now()).strftime('%d/%m/%Y %H:%M')
+            board, fields.Datetime.now()).strftime('%d/%m/%Y %I:%M %p').lower()
 
         if board.template_type == 'ad':
             playlist_id = self._extract_playlist_id(board.youtube_url or '')

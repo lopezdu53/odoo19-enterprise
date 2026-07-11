@@ -47,7 +47,7 @@
                     .tvc-legend .item { display: flex; align-items: center; gap: .5vw; font-size: clamp(12px, 1.1vw, 20px); }
                     .tvc-legend .dot { width: 1.1vw; height: 1.1vw; min-width: 12px; min-height: 12px; border-radius: 50%; }
                     .tvc-legend .cnt { font-weight: 700; }
-                    .tvc-clock { font-size: clamp(13px, 1.3vw, 24px); font-weight: 600; opacity: .9; white-space: nowrap; }
+                    .tvc-clock { font-size: clamp(20px, 2.2vw, 44px); font-weight: 800; opacity: 1; white-space: nowrap; font-variant-numeric: tabular-nums; }
                     .op-chip {
                         background: var(--accent); color: #fff; font-weight: 800;
                         padding: .5vh 1.1vw; border-radius: 999px;
@@ -290,8 +290,11 @@
                         function pad(n) { return (n &lt; 10 ? '0' : '') + n; }
                         function tick() {
                             var d = new Date();
+                            var h = d.getHours();
+                            var ap = h &lt; 12 ? 'am' : 'pm';
+                            var h12 = h % 12; if (h12 === 0) { h12 = 12; }
                             el.textContent = pad(d.getDate()) + '/' + pad(d.getMonth() + 1) + '/' +
-                                d.getFullYear() + ' ' + pad(d.getHours()) + ':' + pad(d.getMinutes());
+                                d.getFullYear() + ' ' + pad(h12) + ':' + pad(d.getMinutes()) + ' ' + ap;
                         }
                         tick(); setInterval(tick, 15000);
                     })();
