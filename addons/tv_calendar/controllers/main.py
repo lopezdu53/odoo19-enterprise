@@ -115,30 +115,30 @@ class TvCalendarController(http.Controller):
         return self._rolling_values(board, today, n_days, cols, max_tasks)
 
     def _rolling_values(self, board, today, n_days, cols, max_tasks):
-        # N dias consecutivos empezando el dia anterior al actual.
-        start = today - timedelta(days=1)
-        grid_start = start
-        grid_end = start + timedelta(days=n_days - 1)
+        # Recoge N dias empezando el dia anterior al actual. Si no se muestran
+        # los fines de semana, salta sabados y domingos (N dias habiles).
+        collected = []
+        day = today - timedelta(days=1)
+        while len(collected) < n_days:
+            if board.show_weekends or day.weekday() < 5:
+                collected.append(day)
+            day += timedelta(days=1)
+        grid_start = collected[0]
+        grid_end = collected[-1]
         tasks_by_day = self._tasks_by_day(board, grid_start, grid_end)
 
         weeks = []
-        idx = 0
-        while idx < n_days:
+        for i in range(0, len(collected), cols):
             days = []
-            for _c in range(cols):
-                if idx >= n_days:
-                    break
-                day = start + timedelta(days=idx)
-                idx += 1
-                # Orden descendente por creacion: la mas reciente arriba.
-                day_tasks = sorted(
-                    tasks_by_day.get(day, []), key=lambda t: t.id, reverse=True)
+            for d in collected[i:i + cols]:
+                # Orden ascendente por creacion: la mas reciente abajo.
+                day_tasks = sorted(tasks_by_day.get(d, []), key=lambda t: t.id)
                 days.append({
-                    'day_num': day.day,
-                    'weekday_label': WEEKDAYS_ES[day.weekday()][:3],
-                    'in_month': day >= today,
-                    'is_today': day == today,
-                    'is_weekend': day.weekday() >= 5,
+                    'day_num': d.day,
+                    'weekday_label': WEEKDAYS_ES[d.weekday()][:3],
+                    'in_month': d >= today,
+                    'is_today': d == today,
+                    'is_weekend': d.weekday() >= 5,
                     'tasks': [self._task_vals(t) for t in day_tasks[:max_tasks]],
                     'overflow': max(0, len(day_tasks) - max_tasks),
                 })
@@ -183,8 +183,7 @@ class TvCalendarController(http.Controller):
             for day in week:
                 if not board.show_weekends and day.weekday() >= 5:
                     continue
-                day_tasks = sorted(
-                    tasks_by_day.get(day, []), key=lambda t: t.id, reverse=True)
+                day_tasks = sorted(tasks_by_day.get(day, []), key=lambda t: t.id)
                 days.append({
                     'day_num': day.day,
                     'weekday_label': WEEKDAYS_ES[day.weekday()][:3],
