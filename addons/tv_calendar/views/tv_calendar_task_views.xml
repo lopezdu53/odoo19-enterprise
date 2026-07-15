@@ -8,7 +8,7 @@
                 <field name="date"/>
                 <field name="date_end" optional="hide"/>
                 <field name="name"/>
-                <field name="board_id"/>
+                <field name="board_ids" widget="many2many_tags"/>
                 <field name="importance" widget="badge"
                        decoration-danger="importance == 'critical'"
                        decoration-warning="importance == 'high'"
@@ -32,7 +32,8 @@
                     </div>
                     <group>
                         <group>
-                            <field name="board_id"/>
+                            <field name="board_ids" widget="many2many_tags"
+                                   options="{'no_quick_create': True}"/>
                             <field name="importance"/>
                             <field name="user_id" widget="many2one_avatar_user"/>
                             <field name="done"/>
@@ -60,7 +61,7 @@
             <calendar string="Tareas" date_start="date" date_stop="date_end"
                       color="importance" mode="month">
                 <field name="name"/>
-                <field name="board_id" filters="1"/>
+                <field name="board_ids"/>
                 <field name="importance" filters="1"/>
                 <field name="user_id" filters="1"/>
             </calendar>
@@ -73,14 +74,14 @@
         <field name="arch" type="xml">
             <search string="Buscar tareas">
                 <field name="name"/>
-                <field name="board_id"/>
+                <field name="board_ids"/>
                 <field name="user_id"/>
                 <filter name="pending" string="Pendientes" domain="[('done', '=', False)]"/>
                 <filter name="completed" string="Completadas" domain="[('done', '=', True)]"/>
                 <separator/>
                 <filter name="imp_critical" string="Critica" domain="[('importance', '=', 'critical')]"/>
                 <filter name="imp_high" string="Alta" domain="[('importance', '=', 'high')]"/>
-                <filter name="group_board" string="Tablero" context="{'group_by': 'board_id'}"/>
+                <filter name="group_board" string="Tablero" context="{'group_by': 'board_ids'}"/>
                 <filter name="group_importance" string="Importancia" context="{'group_by': 'importance'}"/>
                 <filter name="group_user" string="Responsable" context="{'group_by': 'user_id'}"/>
                 <filter name="group_date" string="Fecha" context="{'group_by': 'date'}"/>

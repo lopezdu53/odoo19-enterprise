@@ -73,23 +73,30 @@
                     .tvc-cell.today { border-color: var(--today); box-shadow: inset 0 0 0 3px var(--today); }
                     .tvc-cell .daynum {
                         font-size: clamp(15px, 1.6vw, 30px); font-weight: 700; line-height: 1;
-                        margin-bottom: .4vh; display: flex; justify-content: flex-end;
+                        margin-bottom: .4vh; display: flex; justify-content: space-between; align-items: baseline;
                     }
+                    .tvc-cell .daynum .wd { font-size: clamp(11px, 1vw, 20px); font-weight: 700; color: var(--muted); text-transform: uppercase; }
                     .tvc-cell.today .daynum { color: var(--today); }
+                    .tvc-cell.today .daynum .wd { color: var(--today); }
                     .tvc-cell .daynum .badge { background: var(--today); color: #fff; border-radius: 999px; padding: .2vh .8vw; }
                     .tvc-tasks { display: flex; flex-direction: column; gap: .5vh; overflow: hidden; }
                     .tvc-task {
-                        color: #fff; border-radius: 6px; padding: .4vh .6vw;
-                        line-height: 1.15; overflow: hidden;
+                        color: #fff; border-radius: 6px; padding: .5vh .7vw;
+                        line-height: 1.2; overflow: hidden;
                     }
                     .tvc-task .t-name {
-                        font-size: clamp(12px, 1.15vw, 22px); font-weight: 700;
-                        white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-                        display: flex; align-items: center; gap: .4vw;
+                        font-size: clamp(12px, 1.2vw, 24px); font-weight: 800;
+                        overflow: hidden; text-overflow: ellipsis;
+                        display: flex; align-items: baseline; gap: .4vw; justify-content: space-between;
                     }
+                    .tvc-task .t-name .tt { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+                    .tvc-task .t-time { font-size: clamp(9px, .8vw, 15px); font-weight: 600; opacity: .85; white-space: nowrap; }
+                    .tvc-task .t-boards { font-size: clamp(9px, .85vw, 16px); font-weight: 700; opacity: .95; margin-top: .1vh;
+                        white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
                     .tvc-task .t-desc {
-                        font-size: clamp(10px, .85vw, 16px); font-weight: 400; opacity: .92;
-                        white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: .1vh;
+                        font-size: clamp(10px, .9vw, 17px); font-weight: 400; opacity: .95; margin-top: .2vh;
+                        white-space: pre-line; overflow: hidden;
+                        display: -webkit-box; -webkit-line-clamp: 10; -webkit-box-orient: vertical;
                     }
                     .tvc-task.done { opacity: .55; text-decoration: line-through; }
                     .tvc-task .check { font-weight: 800; }
@@ -106,8 +113,11 @@
                     .big-tasks { flex: 1 1 auto; display: flex; flex-direction: column; gap: 1vh; padding: 1.2vh 1.2vw; overflow: auto; }
                     .big-task { color: #fff; border-radius: 12px; padding: 1.4vh 1.4vw; display: flex; flex-direction: column; gap: .3vh; }
                     .big-task.done { opacity: .55; text-decoration: line-through; }
+                    .big-task .bt-head { display: flex; align-items: baseline; justify-content: space-between; gap: 1vw; }
                     .big-task .bt-name { font-size: clamp(20px, 2.6vw, 52px); font-weight: 800; line-height: 1.1; }
-                    .big-task .bt-desc { font-size: clamp(14px, 1.5vw, 30px); font-weight: 500; opacity: .95; }
+                    .big-task .bt-time { font-size: clamp(12px, 1.2vw, 24px); font-weight: 600; opacity: .85; white-space: nowrap; }
+                    .big-task .bt-desc { font-size: clamp(14px, 1.5vw, 30px); font-weight: 500; opacity: .95;
+                        overflow: hidden; display: -webkit-box; -webkit-line-clamp: 10; -webkit-box-orient: vertical; }
                     .big-task .bt-desc p { margin: 0 0 .3em 0; }
                     .big-task .bt-desc p:last-child { margin-bottom: 0; }
                     .big-task .bt-desc img { max-width: 100%; max-height: 22vh; height: auto; border-radius: 6px; margin: .3em 0; }
@@ -169,7 +179,12 @@
                                 <t t-foreach="today_tasks" t-as="task">
                                     <div t-attf-class="big-task#{' done' if task['done'] else ''}"
                                          t-attf-style="background:#{task['color']}">
-                                        <div class="bt-name" t-esc="task['name']"/>
+                                        <div class="bt-head">
+                                            <div class="bt-name" t-esc="task['name']"/>
+                                            <t t-if="task['created']">
+                                                <div class="bt-time">&#128337; <t t-esc="task['created']"/></div>
+                                            </t>
+                                        </div>
                                         <t t-if="task['description_text']">
                                             <div class="bt-desc" t-out="task['description_html']"/>
                                         </t>
@@ -246,17 +261,22 @@
                             <span class="tvc-clock" id="tvc-clock" t-esc="now_label"/>
                         </div>
                     </header>
-                    <div class="tvc-weekdays" t-attf-style="grid-template-columns: repeat(#{num_columns}, 1fr);">
-                        <t t-foreach="weekday_names" t-as="wd">
-                            <div class="wd" t-esc="wd"/>
-                        </t>
-                    </div>
+                    <t t-if="show_weekdays_row">
+                        <div class="tvc-weekdays" t-attf-style="grid-template-columns: repeat(#{num_columns}, 1fr);">
+                            <t t-foreach="weekday_names" t-as="wd">
+                                <div class="wd" t-esc="wd"/>
+                            </t>
+                        </div>
+                    </t>
                     <div class="tvc-grid"
                          t-attf-style="grid-template-columns: repeat(#{num_columns}, 1fr); grid-template-rows: repeat(#{len(weeks)}, 1fr);">
                         <t t-foreach="weeks" t-as="week">
                             <t t-foreach="week" t-as="day">
                                 <div t-attf-class="tvc-cell#{' out' if not day['in_month'] else ''}#{' today' if day['is_today'] else ''}#{' weekend' if day['is_weekend'] else ''}">
                                     <div class="daynum">
+                                        <t t-if="not show_weekdays_row">
+                                            <span class="wd" t-esc="day['weekday_label']"/>
+                                        </t>
                                         <t t-if="day['is_today']"><span class="badge" t-esc="day['day_num']"/></t>
                                         <t t-else=""><span t-esc="day['day_num']"/></t>
                                     </div>
@@ -265,9 +285,17 @@
                                             <div t-attf-class="tvc-task#{' done' if task['done'] else ''}"
                                                  t-attf-style="background:#{task['color']}">
                                                 <div class="t-name">
-                                                    <t t-if="task['done']"><span class="check">&#10003;</span></t>
-                                                    <span t-esc="task['name']"/>
+                                                    <span class="tt">
+                                                        <t t-if="task['done']"><span class="check">&#10003;</span></t>
+                                                        <t t-esc="task['name']"/>
+                                                    </span>
+                                                    <t t-if="task['created']">
+                                                        <span class="t-time" t-esc="task['created']"/>
+                                                    </t>
                                                 </div>
+                                                <t t-if="task['boards']">
+                                                    <div class="t-boards">&#128250; <t t-esc="', '.join(task['boards'])"/></div>
+                                                </t>
                                                 <t t-if="task['description_text']">
                                                     <div class="t-desc" t-esc="task['description_text']"/>
                                                 </t>

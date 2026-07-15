@@ -24,7 +24,9 @@ class TvCalendarBoard(models.Model):
     access_token = fields.Char(
         string='Token de acceso', copy=False, index=True, readonly=True,
         help="Token secreto que forma parte de la URL publica del TV.")
-    task_ids = fields.One2many('tv.calendar.task', 'board_id', string='Tareas')
+    task_ids = fields.Many2many(
+        'tv.calendar.task', 'tv_calendar_task_board_rel', 'board_id', 'task_id',
+        string='Tareas')
     task_count = fields.Integer(compute='_compute_task_count')
 
     template_type = fields.Selection(
@@ -45,11 +47,14 @@ class TvCalendarBoard(models.Model):
              "mostrar los cambios. 0 = sin recarga automatica.")
     schedule_range = fields.Selection(
         [
-            ('two_weeks', '2 semanas (desde ayer)'),
+            ('5_days', '5 dias'),
+            ('10_days', '10 dias'),
+            ('two_weeks', '2 semanas (14 dias)'),
             ('month', 'Mes completo'),
         ],
-        string='Rango del cronograma', default='two_weeks', required=True,
-        help="2 semanas: muestra 14 dias empezando el dia anterior al actual.")
+        string='Rango del cronograma', default='10_days', required=True,
+        help="Los rangos por dias empiezan el dia anterior al actual "
+             "(ventana rodante). 'Mes completo' muestra el mes en curso.")
     week_start = fields.Selection(
         [('0', 'Lunes'), ('6', 'Domingo')],
         string='La semana empieza en', default='0', required=True)
@@ -149,6 +154,6 @@ class TvCalendarBoard(models.Model):
             'name': 'Tareas',
             'res_model': 'tv.calendar.task',
             'view_mode': 'calendar,list,form',
-            'domain': [('board_id', '=', self.id)],
-            'context': {'default_board_id': self.id},
+            'domain': [('board_ids', 'in', self.id)],
+            'context': {'default_board_ids': [(6, 0, [self.id])]},
         }

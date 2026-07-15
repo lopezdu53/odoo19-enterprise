@@ -29,10 +29,10 @@ class TvCalendarTask(models.Model):
     _inherit = ['mail.thread']
 
     name = fields.Char(string='Titulo', required=True, tracking=True)
-    board_id = fields.Many2one(
-        'tv.calendar.board', string='Tablero', required=True,
-        ondelete='cascade', index=True, tracking=True,
-        help="Tablero (TV) donde se mostrara esta tarea.")
+    board_ids = fields.Many2many(
+        'tv.calendar.board', 'tv_calendar_task_board_rel', 'task_id', 'board_id',
+        string='Tableros', required=True, tracking=True,
+        help="Uno o varios tableros (TV) donde se mostrara esta tarea.")
     date = fields.Date(
         string='Fecha', required=True, index=True,
         default=fields.Date.context_today, tracking=True)
@@ -67,6 +67,13 @@ class TvCalendarTask(models.Model):
             if task.date_end and task.date and task.date_end < task.date:
                 raise ValidationError(
                     "La fecha fin no puede ser anterior a la fecha de inicio.")
+
+    @api.constrains('board_ids')
+    def _check_board(self):
+        for task in self:
+            if not task.board_ids:
+                raise ValidationError(
+                    "Asigna la tarea a al menos un tablero.")
 
     def importance_display(self):
         """Etiqueta legible del nivel de importancia."""

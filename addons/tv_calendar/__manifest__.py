@@ -1,6 +1,6 @@
 {
     'name': 'TV Calendar Board',
-    'version': '19.0.1.0.0',
+    'version': '19.0.1.1.0',
     'category': 'Productivity',
     'summary': 'Calendario mensual a pantalla completa para proyectar en un TV (modo kiosco).',
     'description': """

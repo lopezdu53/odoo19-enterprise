@@ -100,40 +100,47 @@ class TvCalendarController(http.Controller):
     # ------------------------------------------------------------------
     # Cronograma principal
     # ------------------------------------------------------------------
+    # Rangos rodantes: (numero de dias, columnas por fila, tareas max por celda)
+    ROLLING = {
+        '5_days': (5, 5, 8),
+        '10_days': (10, 5, 6),
+        'two_weeks': (14, 7, 6),
+    }
+
     def _schedule_values(self, board, today, offset):
         if board.schedule_range == 'month':
             return self._month_values(board, today, offset)
-        return self._two_weeks_values(board, today)
+        n_days, cols, max_tasks = self.ROLLING.get(
+            board.schedule_range, self.ROLLING['10_days'])
+        return self._rolling_values(board, today, n_days, cols, max_tasks)
 
-    def _two_weeks_values(self, board, today):
-        # 14 dias consecutivos empezando el dia anterior al actual (2 filas de 7).
+    def _rolling_values(self, board, today, n_days, cols, max_tasks):
+        # N dias consecutivos empezando el dia anterior al actual.
         start = today - timedelta(days=1)
         grid_start = start
-        grid_end = start + timedelta(days=13)
+        grid_end = start + timedelta(days=n_days - 1)
         tasks_by_day = self._tasks_by_day(board, grid_start, grid_end)
 
-        col_indices = list(range(7))
-        if not board.show_weekends:
-            col_indices = [c for c in col_indices
-                           if (start + timedelta(days=c)).weekday() < 5]
-        weekday_names = [WEEKDAYS_ES[(start + timedelta(days=c)).weekday()]
-                         for c in col_indices]
-
         weeks = []
-        for row in range(2):
+        idx = 0
+        while idx < n_days:
             days = []
-            for c in col_indices:
-                day = start + timedelta(days=row * 7 + c)
+            for _c in range(cols):
+                if idx >= n_days:
+                    break
+                day = start + timedelta(days=idx)
+                idx += 1
                 day_tasks = sorted(
                     tasks_by_day.get(day, []),
                     key=lambda t: (-t.importance_rank, t.name or ''))
                 days.append({
                     'day_num': day.day,
+                    'weekday_label': WEEKDAYS_ES[day.weekday()][:3],
                     'in_month': day >= today,
                     'is_today': day == today,
                     'is_weekend': day.weekday() >= 5,
-                    'tasks': [self._task_vals(t) for t in day_tasks[:6]],
-                    'overflow': max(0, len(day_tasks) - 6),
+                    'tasks': [self._task_vals(t) for t in day_tasks[:max_tasks]],
+                    'overflow': max(0, len(day_tasks) - max_tasks),
                 })
             weeks.append(days)
 
@@ -143,8 +150,9 @@ class TvCalendarController(http.Controller):
         return {
             'month_name': label,
             'year': today.year,
-            'weekday_names': weekday_names,
-            'num_columns': len(col_indices),
+            'show_weekdays_row': False,
+            'weekday_names': [],
+            'num_columns': cols,
             'weeks': weeks,
             'legend': self._legend(board, grid_start, grid_end),
         }
@@ -180,6 +188,7 @@ class TvCalendarController(http.Controller):
                     key=lambda t: (-t.importance_rank, t.name or ''))
                 days.append({
                     'day_num': day.day,
+                    'weekday_label': WEEKDAYS_ES[day.weekday()][:3],
                     'in_month': day.month == month,
                     'is_today': day == today,
                     'is_weekend': day.weekday() >= 5,
@@ -193,6 +202,7 @@ class TvCalendarController(http.Controller):
         return {
             'month_name': MONTHS_ES[month - 1],
             'year': year,
+            'show_weekdays_row': True,
             'weekday_names': weekday_names,
             'num_columns': len(weekday_names),
             'weeks': weeks,
@@ -221,7 +231,7 @@ class TvCalendarController(http.Controller):
     @staticmethod
     def _tasks_by_day(board, grid_start, grid_end):
         domain = [
-            ('board_id', '=', board.id),
+            ('board_ids', 'in', board.id),
             ('date', '<=', grid_end),
             '|',
             '&', ('date_end', '!=', False), ('date_end', '>=', grid_start),
@@ -245,6 +255,16 @@ class TvCalendarController(http.Controller):
     @staticmethod
     def _task_vals(task):
         desc_html = task.description or ''
+        created = ''
+        if task.create_date:
+            created = fields.Datetime.context_timestamp(
+                task, task.create_date).strftime('%d/%m %I:%M %p').lower()
+        boards = []
+        for b in task.board_ids:
+            if b.template_type == 'operator' and b.operator_display:
+                boards.append(b.operator_display)
+            else:
+                boards.append(b.name)
         return {
             'name': task.name,
             'description_html': desc_html,
@@ -253,6 +273,8 @@ class TvCalendarController(http.Controller):
             'importance': task.importance_display(),
             'done': task.done,
             'user': task.user_id.name or '',
+            'created': created,
+            'boards': boards,
         }
 
     # ------------------------------------------------------------------
@@ -261,7 +283,7 @@ class TvCalendarController(http.Controller):
     def _operator_today_tasks(self, board, today):
         source = board.task_board_id or board
         domain = [
-            ('board_id', '=', source.id),
+            ('board_ids', 'in', source.id),
             ('date', '<=', today),
             '|',
             '&', ('date_end', '!=', False), ('date_end', '>=', today),

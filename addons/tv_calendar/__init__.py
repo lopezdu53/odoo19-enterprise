@@ -16,16 +16,17 @@ def post_init_hook(env):
         def day(number):
             return today.replace(day=min(number, last_day))
 
+        boards = [(6, 0, [board.id])]
         env['tv.calendar.task'].create([
-            {'name': 'Reunion de equipo', 'board_id': board.id,
+            {'name': 'Reunion de equipo', 'board_ids': boards,
              'importance': 'normal', 'date': day(3),
-             'description': 'Sala de juntas, 9:00 am'},
-            {'name': 'Entrega cliente', 'board_id': board.id,
+             'description': '<p>Sala de juntas, 9:00 am</p>'},
+            {'name': 'Entrega cliente', 'board_ids': boards,
              'importance': 'critical', 'date': day(12),
-             'description': 'Pedido #1042'},
-            {'name': 'Mantenimiento servidores', 'board_id': board.id,
+             'description': '<p>Pedido #1042</p>'},
+            {'name': 'Mantenimiento servidores', 'board_ids': boards,
              'importance': 'high', 'date': day(18), 'date_end': day(19)},
-            {'name': 'Revision inventario', 'board_id': board.id,
+            {'name': 'Revision inventario', 'board_ids': boards,
              'importance': 'low', 'date': day(25)},
         ])
 
