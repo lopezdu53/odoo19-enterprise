@@ -1,7 +1,7 @@
 import calendar
 import re
 import urllib.parse
-from datetime import date, timedelta
+from datetime import date, timedelta, timezone
 
 from odoo import fields, http
 from odoo.http import request
@@ -130,9 +130,9 @@ class TvCalendarController(http.Controller):
                     break
                 day = start + timedelta(days=idx)
                 idx += 1
+                # Orden descendente por creacion: la mas reciente arriba.
                 day_tasks = sorted(
-                    tasks_by_day.get(day, []),
-                    key=lambda t: (-t.importance_rank, t.name or ''))
+                    tasks_by_day.get(day, []), key=lambda t: t.id, reverse=True)
                 days.append({
                     'day_num': day.day,
                     'weekday_label': WEEKDAYS_ES[day.weekday()][:3],
@@ -184,8 +184,7 @@ class TvCalendarController(http.Controller):
                 if not board.show_weekends and day.weekday() >= 5:
                     continue
                 day_tasks = sorted(
-                    tasks_by_day.get(day, []),
-                    key=lambda t: (-t.importance_rank, t.name or ''))
+                    tasks_by_day.get(day, []), key=lambda t: t.id, reverse=True)
                 days.append({
                     'day_num': day.day,
                     'weekday_label': WEEKDAYS_ES[day.weekday()][:3],
@@ -255,10 +254,12 @@ class TvCalendarController(http.Controller):
     @staticmethod
     def _task_vals(task):
         desc_html = task.description or ''
-        created = ''
+        # Epoch UTC (segundos): el navegador del TV lo convierte a la hora
+        # local del dispositivo, igual que el reloj. Asi no depende de la
+        # zona horaria del usuario publico del servidor.
+        created_ts = 0
         if task.create_date:
-            created = fields.Datetime.context_timestamp(
-                task, task.create_date).strftime('%d/%m %I:%M %p').lower()
+            created_ts = int(task.create_date.replace(tzinfo=timezone.utc).timestamp())
         boards = []
         for b in task.board_ids:
             if b.template_type == 'operator' and b.operator_display:
@@ -273,7 +274,7 @@ class TvCalendarController(http.Controller):
             'importance': task.importance_display(),
             'done': task.done,
             'user': task.user_id.name or '',
-            'created': created,
+            'created_ts': created_ts,
             'boards': boards,
         }
 

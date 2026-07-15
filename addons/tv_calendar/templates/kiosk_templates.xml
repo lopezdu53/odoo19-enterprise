@@ -84,15 +84,14 @@
                         color: #fff; border-radius: 6px; padding: .5vh .7vw;
                         line-height: 1.2; overflow: hidden;
                     }
+                    .tvc-task .t-time { font-size: clamp(9px, .85vw, 16px); font-weight: 600; opacity: .85; white-space: nowrap; display: block; }
                     .tvc-task .t-name {
-                        font-size: clamp(12px, 1.2vw, 24px); font-weight: 800;
-                        overflow: hidden; text-overflow: ellipsis;
-                        display: flex; align-items: baseline; gap: .4vw; justify-content: space-between;
+                        font-size: clamp(12px, 1.2vw, 24px); font-weight: 800; margin-top: .1vh;
+                        overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
                     }
-                    .tvc-task .t-name .tt { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-                    .tvc-task .t-time { font-size: clamp(9px, .8vw, 15px); font-weight: 600; opacity: .85; white-space: nowrap; }
-                    .tvc-task .t-boards { font-size: clamp(9px, .85vw, 16px); font-weight: 700; opacity: .95; margin-top: .1vh;
-                        white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+                    .tvc-task .t-name .check { margin-right: .3vw; }
+                    .tvc-task .t-boards { font-size: clamp(9px, .85vw, 16px); font-weight: 700; opacity: .95; margin-top: .15vh; }
+                    .tvc-task .t-boards .bd { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
                     .tvc-task .t-desc {
                         font-size: clamp(10px, .9vw, 17px); font-weight: 400; opacity: .95; margin-top: .2vh;
                         white-space: pre-line; overflow: hidden;
@@ -113,9 +112,8 @@
                     .big-tasks { flex: 1 1 auto; display: flex; flex-direction: column; gap: 1vh; padding: 1.2vh 1.2vw; overflow: auto; }
                     .big-task { color: #fff; border-radius: 12px; padding: 1.4vh 1.4vw; display: flex; flex-direction: column; gap: .3vh; }
                     .big-task.done { opacity: .55; text-decoration: line-through; }
-                    .big-task .bt-head { display: flex; align-items: baseline; justify-content: space-between; gap: 1vw; }
-                    .big-task .bt-name { font-size: clamp(20px, 2.6vw, 52px); font-weight: 800; line-height: 1.1; }
-                    .big-task .bt-time { font-size: clamp(12px, 1.2vw, 24px); font-weight: 600; opacity: .85; white-space: nowrap; }
+                    .big-task .bt-time { font-size: clamp(12px, 1.3vw, 26px); font-weight: 600; opacity: .85; white-space: nowrap; }
+                    .big-task .bt-name { font-size: clamp(20px, 2.6vw, 52px); font-weight: 800; line-height: 1.1; margin-top: .2vh; }
                     .big-task .bt-desc { font-size: clamp(14px, 1.5vw, 30px); font-weight: 500; opacity: .95;
                         overflow: hidden; display: -webkit-box; -webkit-line-clamp: 10; -webkit-box-orient: vertical; }
                     .big-task .bt-desc p { margin: 0 0 .3em 0; }
@@ -179,12 +177,10 @@
                                 <t t-foreach="today_tasks" t-as="task">
                                     <div t-attf-class="big-task#{' done' if task['done'] else ''}"
                                          t-attf-style="background:#{task['color']}">
-                                        <div class="bt-head">
-                                            <div class="bt-name" t-esc="task['name']"/>
-                                            <t t-if="task['created']">
-                                                <div class="bt-time">&#128337; <t t-esc="task['created']"/></div>
-                                            </t>
-                                        </div>
+                                        <t t-if="task['created_ts']">
+                                            <div class="bt-time" t-att-data-ts="task['created_ts']"/>
+                                        </t>
+                                        <div class="bt-name" t-esc="task['name']"/>
                                         <t t-if="task['description_text']">
                                             <div class="bt-desc" t-out="task['description_html']"/>
                                         </t>
@@ -284,17 +280,19 @@
                                         <t t-foreach="day['tasks']" t-as="task">
                                             <div t-attf-class="tvc-task#{' done' if task['done'] else ''}"
                                                  t-attf-style="background:#{task['color']}">
+                                                <t t-if="task['created_ts']">
+                                                    <span class="t-time" t-att-data-ts="task['created_ts']"/>
+                                                </t>
                                                 <div class="t-name">
-                                                    <span class="tt">
-                                                        <t t-if="task['done']"><span class="check">&#10003;</span></t>
-                                                        <t t-esc="task['name']"/>
-                                                    </span>
-                                                    <t t-if="task['created']">
-                                                        <span class="t-time" t-esc="task['created']"/>
-                                                    </t>
+                                                    <t t-if="task['done']"><span class="check">&#10003;</span></t>
+                                                    <t t-esc="task['name']"/>
                                                 </div>
                                                 <t t-if="task['boards']">
-                                                    <div class="t-boards">&#128250; <t t-esc="', '.join(task['boards'])"/></div>
+                                                    <div class="t-boards">
+                                                        <t t-foreach="task['boards']" t-as="bd">
+                                                            <div class="bd">&#9642; <t t-esc="bd"/></div>
+                                                        </t>
+                                                    </div>
                                                 </t>
                                                 <t t-if="task['description_text']">
                                                     <div class="t-desc" t-esc="task['description_text']"/>
@@ -313,18 +311,32 @@
 
                 <script type="text/javascript">
                     (function () {
-                        var el = document.getElementById('tvc-clock');
-                        if (!el) { return; }
                         function pad(n) { return (n &lt; 10 ? '0' : '') + n; }
-                        function tick() {
-                            var d = new Date();
+                        function fmtTime(d) {
                             var h = d.getHours();
                             var ap = h &lt; 12 ? 'am' : 'pm';
                             var h12 = h % 12; if (h12 === 0) { h12 = 12; }
-                            el.textContent = pad(d.getDate()) + '/' + pad(d.getMonth() + 1) + '/' +
-                                d.getFullYear() + ' ' + pad(h12) + ':' + pad(d.getMinutes()) + ' ' + ap;
+                            return pad(h12) + ':' + pad(d.getMinutes()) + ' ' + ap;
                         }
-                        tick(); setInterval(tick, 15000);
+                        // Horas de creacion -> hora local del dispositivo (arregla la zona horaria)
+                        var stamps = document.querySelectorAll('[data-ts]');
+                        Array.prototype.forEach.call(stamps, function (el) {
+                            var ts = parseInt(el.getAttribute('data-ts'), 10);
+                            if (ts) {
+                                var d = new Date(ts * 1000);
+                                el.textContent = pad(d.getDate()) + '/' + pad(d.getMonth() + 1) + ' ' + fmtTime(d);
+                            }
+                        });
+                        // Reloj en vivo
+                        var clock = document.getElementById('tvc-clock');
+                        if (clock) {
+                            function tick() {
+                                var d = new Date();
+                                clock.textContent = pad(d.getDate()) + '/' + pad(d.getMonth() + 1) + '/' +
+                                    d.getFullYear() + ' ' + fmtTime(d);
+                            }
+                            tick(); setInterval(tick, 15000);
+                        }
                     })();
                 </script>
             </body>
