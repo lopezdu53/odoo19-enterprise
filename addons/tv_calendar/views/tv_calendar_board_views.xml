@@ -46,6 +46,7 @@
                         <group string="General">
                             <field name="template_type"/>
                             <field name="theme"/>
+                            <field name="tz"/>
                             <field name="refresh_interval"
                                    invisible="template_type == 'ad'"/>
                         </group>

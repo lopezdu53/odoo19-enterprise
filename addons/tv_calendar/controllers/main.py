@@ -3,6 +3,8 @@ import re
 import urllib.parse
 from datetime import date, timedelta, timezone
 
+import pytz
+
 from odoo import fields, http
 from odoo.http import request
 from odoo.tools import html2plaintext
@@ -31,8 +33,12 @@ class TvCalendarController(http.Controller):
         if not board:
             return request.not_found()
 
-        now_label = fields.Datetime.context_timestamp(
-            board, fields.Datetime.now()).strftime('%d/%m/%Y %I:%M %p').lower()
+        # "Hoy" y la hora en la zona horaria local del TV (no la del usuario
+        # publico, que seria UTC y desplazaria el dia por la tarde/noche).
+        tz = pytz.timezone(self._board_tz(board))
+        now_local = pytz.utc.localize(fields.Datetime.now()).astimezone(tz)
+        today = now_local.date()
+        now_label = now_local.strftime('%d/%m/%Y %I:%M %p').lower()
 
         if board.template_type == 'ad':
             playlist_id = self._extract_playlist_id(board.youtube_url or '')
@@ -48,7 +54,6 @@ class TvCalendarController(http.Controller):
                 'now_label': now_label,
             }, allow_youtube=True)
 
-        today = fields.Date.context_today(board)
         common = {
             'board': board,
             'theme': board.theme,
@@ -81,8 +86,15 @@ class TvCalendarController(http.Controller):
         return self._render(board, 'tv_calendar.kiosk_page', common)
 
     # ------------------------------------------------------------------
-    # Render helper
+    # Helpers
     # ------------------------------------------------------------------
+    @staticmethod
+    def _board_tz(board):
+        if board.tz:
+            return board.tz
+        admin = request.env.ref('base.user_admin', raise_if_not_found=False)
+        return (admin and admin.tz) or 'UTC'
+
     @staticmethod
     def _render(board, template, values, allow_youtube=False):
         html = request.env['ir.qweb']._render(template, values)

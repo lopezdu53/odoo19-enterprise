@@ -1,6 +1,14 @@
 import secrets
 
+import pytz
+
 from odoo import api, fields, models
+
+
+def _tz_get(self):
+    return [(tz, tz) for tz in sorted(
+        pytz.all_timezones,
+        key=lambda t: t if not t.startswith('Etc/') else '_' + t)]
 
 # Horario de turno por defecto para la plantilla Operario.
 STANDARD_SCHEDULE = [
@@ -63,6 +71,11 @@ class TvCalendarBoard(models.Model):
     theme = fields.Selection(
         [('light', 'Claro'), ('dark', 'Oscuro')],
         string='Tema', default='light', required=True)
+    tz = fields.Selection(
+        _tz_get, string='Zona horaria',
+        default=lambda self: self.env.user.tz or 'UTC',
+        help="Zona horaria del TV. Se usa para saber que dia es 'hoy' y "
+             "calcular el rango de dias del cronograma.")
 
     # --- Plantilla Operario ---
     employee_id = fields.Many2one(
