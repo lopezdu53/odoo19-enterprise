@@ -64,8 +64,11 @@ class TvCalendarController(http.Controller):
             'year': today.year,
         }
 
-        if board.template_type == 'operator':
+        if board.template_type in ('operator', 'mecanizado'):
+            is_mecan = board.template_type == 'mecanizado'
             common.update({
+                'is_mecan': is_mecan,
+                'show_images': is_mecan,
                 'operator_name': board.operator_display or '',
                 'epp_message': board.epp_message or '',
                 'epp_message2': board.epp_message2 or '',
@@ -75,7 +78,7 @@ class TvCalendarController(http.Controller):
                     'activity': s.activity or '',
                     'color': s.slot_color(),
                 } for s in board.time_slot_ids],
-                'today_tasks': self._operator_today_tasks(board, today),
+                'today_tasks': self._operator_today_tasks(board, today, with_image=is_mecan),
                 'today_label': ('%s de %s de %s'
                                 % (today.day, MONTHS_ES[today.month - 1], today.year)),
             })
@@ -263,7 +266,7 @@ class TvCalendarController(http.Controller):
         return result
 
     @staticmethod
-    def _task_vals(task):
+    def _task_vals(task, with_image=False):
         desc_html = task.description or ''
         # Epoch UTC (segundos): el navegador del TV lo convierte a la hora
         # local del dispositivo, igual que el reloj. Asi no depende de la
@@ -273,10 +276,13 @@ class TvCalendarController(http.Controller):
             created_ts = int(task.create_date.replace(tzinfo=timezone.utc).timestamp())
         boards = []
         for b in task.board_ids:
-            if b.template_type == 'operator' and b.operator_display:
+            if b.template_type in ('operator', 'mecanizado') and b.operator_display:
                 boards.append(b.operator_display)
             else:
                 boards.append(b.name)
+        image = ''
+        if with_image and task.reference_image:
+            image = TvCalendarController._image_data_uri(task.reference_image)
         return {
             'name': task.name,
             'description_html': desc_html,
@@ -287,12 +293,26 @@ class TvCalendarController(http.Controller):
             'user': task.user_id.name or '',
             'created_ts': created_ts,
             'boards': boards,
+            'image': image,
         }
+
+    @staticmethod
+    def _image_data_uri(image_b64):
+        # image_b64 es base64 (bytes). Lo embebemos como data URI para que
+        # cargue en la pantalla publica sin problemas de permisos.
+        import base64
+        from odoo.tools.mimetypes import guess_mimetype
+        try:
+            mime = guess_mimetype(base64.b64decode(image_b64)) or 'image/png'
+        except Exception:
+            mime = 'image/png'
+        data = image_b64.decode() if isinstance(image_b64, bytes) else image_b64
+        return 'data:%s;base64,%s' % (mime, data)
 
     # ------------------------------------------------------------------
     # Operario: tareas activas hoy
     # ------------------------------------------------------------------
-    def _operator_today_tasks(self, board, today):
+    def _operator_today_tasks(self, board, today, with_image=False):
         source = board.task_board_id or board
         domain = [
             ('board_ids', 'in', source.id),
@@ -304,7 +324,7 @@ class TvCalendarController(http.Controller):
         # Orden de ingreso (cola): la primera creada arriba.
         tasks = request.env['tv.calendar.task'].sudo().search(domain)
         tasks = tasks.sorted(key=lambda t: t.id)
-        return [self._task_vals(t) for t in tasks]
+        return [self._task_vals(t, with_image=with_image) for t in tasks]
 
     # ------------------------------------------------------------------
     # Publicidad

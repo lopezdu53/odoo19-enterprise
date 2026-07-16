@@ -110,7 +110,10 @@
                     .op-caption { background: var(--accent); color: #fff; padding: .9vh 1.4vw; flex: 0 0 auto;
                         font-size: clamp(16px, 1.9vw, 34px); font-weight: 800; letter-spacing: .5px; }
                     .big-tasks { flex: 1 1 auto; display: flex; flex-direction: column; gap: 1vh; padding: 1.2vh 1.2vw; overflow: auto; }
-                    .big-task { color: #fff; border-radius: 12px; padding: 1.4vh 1.4vw; display: flex; flex-direction: column; gap: .3vh; }
+                    .big-task { color: #fff; border-radius: 12px; padding: 1.4vh 1.4vw; display: flex; flex-direction: row; gap: 1.2vw; align-items: stretch; }
+                    .big-task .bt-content { flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; gap: .3vh; }
+                    .big-task .bt-img { flex: 0 0 40%; display: flex; align-items: center; justify-content: center; }
+                    .big-task .bt-img img { max-width: 100%; max-height: 34vh; border-radius: 8px; object-fit: contain; background: #fff; }
                     .big-task.done { opacity: .55; text-decoration: line-through; }
                     .big-task .bt-time { font-size: clamp(12px, 1.3vw, 26px); font-weight: 600; opacity: .85; white-space: nowrap; }
                     .big-task .bt-name { font-size: clamp(20px, 2.6vw, 52px); font-weight: 800; line-height: 1.1; margin-top: .2vh; }
@@ -152,11 +155,21 @@
                     .op-notice .n-body { padding: .8vh 1vw; font-size: clamp(12px, 1.2vw, 22px); font-weight: 600;
                         white-space: pre-wrap; overflow: auto; line-height: 1.3; }
                     .op-notice .n-empty { color: var(--muted); font-weight: 400; }
+
+                    /* Mecanizado: horario compacto -> mas espacio para AVISOS */
+                    .op-mecan .op-sched { flex: 0 0 auto; }
+                    .op-mecan .op-sched .s-rows { flex: 0 0 auto; }
+                    .op-mecan .s-row { flex: 0 0 auto; padding: .1vh .8vw; }
+                    .op-mecan .s-time { font-size: clamp(10px, 1vw, 18px); }
+                    .op-mecan .s-act { font-size: clamp(10px, .95vw, 17px); }
+                    .op-mecan .s-act.pill { padding: .2vh .5vw; }
+                    .op-mecan .op-notice { flex: 1 1 auto; max-height: none; }
+                    .op-mecan .op-notice .n-body { font-size: clamp(14px, 1.5vw, 28px); }
                 </style>
             </head>
             <body t-attf-class="theme-#{theme}">
-                <t t-if="template_type == 'operator'">
-                    <!-- ======================= OPERARIO ======================= -->
+                <t t-if="template_type in ('operator', 'mecanizado')">
+                    <!-- ================= OPERARIO / MECANIZADO ================= -->
                     <header class="tvc-header">
                         <div class="tvc-title">
                             <span class="tvc-month" t-esc="month_name"/>
@@ -170,19 +183,24 @@
                             <span class="tvc-clock" id="tvc-clock" t-esc="now_label"/>
                         </div>
                     </header>
-                    <div class="op-main">
+                    <div t-attf-class="op-main#{' op-mecan' if is_mecan else ''}">
                         <div class="op-primary">
                             <div class="op-caption">TAREAS DE HOY — <t t-esc="today_label"/></div>
                             <div class="big-tasks">
                                 <t t-foreach="today_tasks" t-as="task">
                                     <div t-attf-class="big-task#{' done' if task['done'] else ''}"
                                          t-attf-style="background:#{task['color']}">
-                                        <t t-if="task['created_ts']">
-                                            <div class="bt-time" t-att-data-ts="task['created_ts']"/>
-                                        </t>
-                                        <div class="bt-name" t-esc="task['name']"/>
-                                        <t t-if="task['description_text']">
-                                            <div class="bt-desc" t-out="task['description_html']"/>
+                                        <div class="bt-content">
+                                            <t t-if="task['created_ts']">
+                                                <div class="bt-time" t-att-data-ts="task['created_ts']"/>
+                                            </t>
+                                            <div class="bt-name" t-esc="task['name']"/>
+                                            <t t-if="task['description_text']">
+                                                <div class="bt-desc" t-out="task['description_html']"/>
+                                            </t>
+                                        </div>
+                                        <t t-if="show_images and task['image']">
+                                            <div class="bt-img"><img t-att-src="task['image']"/></div>
                                         </t>
                                     </div>
                                 </t>

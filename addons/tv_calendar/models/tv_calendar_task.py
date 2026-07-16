@@ -52,6 +52,9 @@ class TvCalendarTask(models.Model):
         'res.users', string='Responsable',
         default=lambda self: self.env.user, tracking=True)
     description = fields.Html(string='Descripcion', sanitize=True)
+    reference_image = fields.Image(
+        string='Imagen de referencia', max_width=1280, max_height=1280,
+        help="Se muestra a la derecha de la tarea en la plantilla Mecanizado.")
     done = fields.Boolean(string='Completada', default=False, tracking=True)
 
     @api.depends('importance')

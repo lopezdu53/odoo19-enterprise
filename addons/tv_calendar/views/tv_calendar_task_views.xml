@@ -43,10 +43,15 @@
                             <field name="date_end"/>
                         </group>
                     </group>
-                    <group string="Descripcion">
-                        <field name="description" nolabel="1" widget="html"
-                               options="{'height': 300}"
-                               placeholder="Detalles, instrucciones, imagenes..."/>
+                    <group>
+                        <group string="Descripcion">
+                            <field name="description" nolabel="1" widget="html"
+                                   options="{'height': 260}"
+                                   placeholder="Detalles, instrucciones, imagenes..."/>
+                        </group>
+                        <group string="Imagen de referencia (Mecanizado)">
+                            <field name="reference_image" widget="image" nolabel="1"/>
+                        </group>
                     </group>
                 </sheet>
                 <chatter/>

@@ -41,12 +41,14 @@ class TvCalendarBoard(models.Model):
         [
             ('schedule', 'Cronograma principal'),
             ('operator', 'Operario'),
+            ('mecanizado', 'Mecanizado'),
             ('ad', 'Publicidad'),
         ],
         string='Tipo de plantilla', default='schedule', required=True,
         help="Que se muestra en el TV:\n"
              "- Cronograma principal: calendario mensual de tareas.\n"
              "- Operario: horario del turno + EPP y avisos.\n"
+             "- Mecanizado: como Operario, horario compacto e imagen por tarea.\n"
              "- Publicidad: una lista de reproduccion de YouTube.")
 
     refresh_interval = fields.Integer(
