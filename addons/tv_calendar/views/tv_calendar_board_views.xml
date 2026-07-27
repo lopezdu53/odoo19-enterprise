@@ -34,7 +34,7 @@
                     <div class="oe_button_box" name="button_box">
                         <button name="action_view_tasks" type="object"
                                 class="oe_stat_button" icon="fa-tasks"
-                                invisible="template_type != 'schedule'">
+                                invisible="template_type not in ('schedule', 'extended')">
                             <field name="task_count" widget="statinfo" string="Tareas"/>
                         </button>
                     </div>

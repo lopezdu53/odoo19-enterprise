@@ -101,6 +101,15 @@
                     .tvc-task .check { font-weight: 800; }
                     .tvc-overflow { font-size: clamp(11px, 1vw, 18px); font-weight: 700; color: var(--muted); padding-left: .3vw; }
 
+                    /* Dia Extendido: fuente de tareas mas pequena (TV 55") */
+                    .tvc-grid.ext .tvc-task { padding: .35vh .5vw; }
+                    .tvc-grid.ext .tvc-task .t-time { font-size: clamp(8px, .7vw, 13px); }
+                    .tvc-grid.ext .tvc-task .t-name { font-size: clamp(10px, .95vw, 18px); }
+                    .tvc-grid.ext .tvc-task .t-boards { font-size: clamp(8px, .72vw, 13px); }
+                    .tvc-grid.ext .tvc-task .t-desc { font-size: clamp(9px, .78vw, 14px); -webkit-line-clamp: 6; }
+                    .tvc-grid.ext .tvc-cell .daynum { font-size: clamp(13px, 1.3vw, 24px); }
+                    .tvc-grid.ext .tvc-cell .daynum .wd { font-size: clamp(10px, .95vw, 18px); }
+
                     /* -------- Operario -------- */
                     .op-main { flex: 1 1 auto; display: flex; min-height: 0; gap: 6px; padding: 6px; }
 
@@ -282,11 +291,12 @@
                             </t>
                         </div>
                     </t>
-                    <div class="tvc-grid"
+                    <div t-attf-class="tvc-grid#{' ext' if extended else ''}"
                          t-attf-style="grid-template-columns: repeat(#{num_columns}, 1fr); grid-template-rows: repeat(#{len(weeks)}, 1fr);">
                         <t t-foreach="weeks" t-as="week">
                             <t t-foreach="week" t-as="day">
-                                <div t-attf-class="tvc-cell#{' out' if not day['in_month'] else ''}#{' today' if day['is_today'] else ''}#{' weekend' if day['is_weekend'] else ''}">
+                                <div t-attf-class="tvc-cell#{' out' if not day['in_month'] else ''}#{' today' if day['is_today'] else ''}#{' weekend' if day['is_weekend'] else ''}"
+                                     t-attf-style="grid-column: span #{day['span']};">
                                     <div class="daynum">
                                         <t t-if="not show_weekdays_row">
                                             <span class="wd" t-esc="day['weekday_label']"/>
@@ -312,7 +322,7 @@
                                                         </t>
                                                     </div>
                                                 </t>
-                                                <t t-if="task['description_text']">
+                                                <t t-if="day['show_desc'] and task['description_text']">
                                                     <div class="t-desc" t-esc="task['description_text']"/>
                                                 </t>
                                             </div>

@@ -84,8 +84,11 @@ class TvCalendarController(http.Controller):
             })
             return self._render(board, 'tv_calendar.kiosk_page', common)
 
-        # --- Plantilla Cronograma principal ---
-        common.update(self._schedule_values(board, today, offset))
+        # --- Cronograma principal (normal o dia extendido) ---
+        if board.template_type == 'extended':
+            common.update(self._extended_values(board, today))
+        else:
+            common.update(self._schedule_values(board, today, offset))
         return self._render(board, 'tv_calendar.kiosk_page', common)
 
     # ------------------------------------------------------------------
@@ -154,6 +157,8 @@ class TvCalendarController(http.Controller):
                     'in_month': d >= today,
                     'is_today': d == today,
                     'is_weekend': d.weekday() >= 5,
+                    'span': 1,
+                    'show_desc': True,
                     'tasks': [self._task_vals(t) for t in day_tasks[:max_tasks]],
                     'overflow': max(0, len(day_tasks) - max_tasks),
                 })
@@ -170,6 +175,55 @@ class TvCalendarController(http.Controller):
             'num_columns': cols,
             'weeks': weeks,
             'legend': self._legend(board, grid_start, grid_end),
+            'extended': False,
+        }
+
+    def _extended_values(self, board, today):
+        # Dia habil anterior a hoy.
+        prev = today - timedelta(days=1)
+        while prev.weekday() >= 5:
+            prev -= timedelta(days=1)
+        # Siguientes 2 dias habiles.
+        nexts = []
+        d = today + timedelta(days=1)
+        while len(nexts) < 2:
+            if d.weekday() < 5:
+                nexts.append(d)
+            d += timedelta(days=1)
+
+        # (fecha, columnas que ocupa, mostrar descripcion)
+        layout = [(prev, 1, False), (today, 2, True), (nexts[0], 1, False), (nexts[1], 1, False)]
+        grid_start, grid_end = prev, nexts[1]
+        tasks_by_day = self._tasks_by_day(board, grid_start, grid_end)
+
+        days = []
+        for d, span, show_desc in layout:
+            cap = 7 if show_desc else 18
+            day_tasks = sorted(tasks_by_day.get(d, []), key=lambda t: t.id)
+            days.append({
+                'day_num': d.day,
+                'weekday_label': WEEKDAYS_ES[d.weekday()][:3],
+                'in_month': d >= today,
+                'is_today': d == today,
+                'is_weekend': d.weekday() >= 5,
+                'span': span,
+                'show_desc': show_desc,
+                'tasks': [self._task_vals(t) for t in day_tasks[:cap]],
+                'overflow': max(0, len(day_tasks) - cap),
+            })
+
+        label = '%s %s – %s %s' % (
+            grid_start.day, MONTHS_ABBR[grid_start.month - 1],
+            grid_end.day, MONTHS_ABBR[grid_end.month - 1])
+        return {
+            'month_name': label,
+            'year': today.year,
+            'show_weekdays_row': False,
+            'weekday_names': [],
+            'num_columns': 5,  # 1 + 2 + 1 + 1
+            'weeks': [days],
+            'legend': self._legend(board, grid_start, grid_end),
+            'extended': True,
         }
 
     def _month_values(self, board, today, offset):
@@ -205,6 +259,8 @@ class TvCalendarController(http.Controller):
                     'in_month': day.month == month,
                     'is_today': day == today,
                     'is_weekend': day.weekday() >= 5,
+                    'span': 1,
+                    'show_desc': True,
                     'tasks': [self._task_vals(t) for t in day_tasks[:4]],
                     'overflow': max(0, len(day_tasks) - 4),
                 })
@@ -220,6 +276,7 @@ class TvCalendarController(http.Controller):
             'num_columns': len(weekday_names),
             'weeks': weeks,
             'legend': self._legend(board, month_first, month_last),
+            'extended': False,
         }
 
     def _legend(self, board, d1, d2):

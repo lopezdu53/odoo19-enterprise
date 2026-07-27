@@ -40,6 +40,7 @@ class TvCalendarBoard(models.Model):
     template_type = fields.Selection(
         [
             ('schedule', 'Cronograma principal'),
+            ('extended', 'Cronograma Principal Dia Extendido'),
             ('operator', 'Operario'),
             ('mecanizado', 'Mecanizado'),
             ('ad', 'Publicidad'),
@@ -47,6 +48,8 @@ class TvCalendarBoard(models.Model):
         string='Tipo de plantilla', default='schedule', required=True,
         help="Que se muestra en el TV:\n"
              "- Cronograma principal: calendario mensual de tareas.\n"
+             "- Cronograma Dia Extendido: dia anterior habil, hoy (doble ancho\n"
+             "  con descripcion) y 2 dias habiles siguientes (sin descripcion).\n"
              "- Operario: horario del turno + EPP y avisos.\n"
              "- Mecanizado: como Operario, horario compacto e imagen por tarea.\n"
              "- Publicidad: una lista de reproduccion de YouTube.")
