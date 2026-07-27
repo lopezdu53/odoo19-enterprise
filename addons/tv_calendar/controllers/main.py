@@ -159,6 +159,7 @@ class TvCalendarController(http.Controller):
                     'is_weekend': d.weekday() >= 5,
                     'span': 1,
                     'show_desc': True,
+                    'split': False,
                     'tasks': [self._task_vals(t) for t in day_tasks[:max_tasks]],
                     'overflow': max(0, len(day_tasks) - max_tasks),
                 })
@@ -191,13 +192,18 @@ class TvCalendarController(http.Controller):
                 nexts.append(d)
             d += timedelta(days=1)
 
-        # (fecha, columnas que ocupa, mostrar descripcion)
-        layout = [(prev, 1, False), (today, 2, True), (nexts[0], 1, False), (nexts[1], 1, False)]
+        # (fecha, columnas que ocupa, mostrar descripcion, layout 70/30)
+        layout = [
+            (prev, 1, False, False),
+            (today, 2, True, True),
+            (nexts[0], 1, False, False),
+            (nexts[1], 1, False, False),
+        ]
         grid_start, grid_end = prev, nexts[1]
         tasks_by_day = self._tasks_by_day(board, grid_start, grid_end)
 
         days = []
-        for d, span, show_desc in layout:
+        for d, span, show_desc, split in layout:
             cap = 7 if show_desc else 18
             day_tasks = sorted(tasks_by_day.get(d, []), key=lambda t: t.id)
             days.append({
@@ -208,6 +214,7 @@ class TvCalendarController(http.Controller):
                 'is_weekend': d.weekday() >= 5,
                 'span': span,
                 'show_desc': show_desc,
+                'split': split,
                 'tasks': [self._task_vals(t) for t in day_tasks[:cap]],
                 'overflow': max(0, len(day_tasks) - cap),
             })
@@ -261,6 +268,7 @@ class TvCalendarController(http.Controller):
                     'is_weekend': day.weekday() >= 5,
                     'span': 1,
                     'show_desc': True,
+                    'split': False,
                     'tasks': [self._task_vals(t) for t in day_tasks[:4]],
                     'overflow': max(0, len(day_tasks) - 4),
                 })
