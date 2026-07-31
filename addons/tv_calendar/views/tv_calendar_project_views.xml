@@ -182,14 +182,11 @@
         <field name="model">tv.calendar.project</field>
         <field name="arch" type="xml">
             <kanban default_order="done, delivery_date" records_draggable="0">
-                <field name="client"/>
-                <field name="delivery_date"/>
-                <field name="order_ref"/>
-                <field name="progress_html"/>
                 <field name="done"/>
+                <field name="order_ref"/>
                 <templates>
-                    <t t-name="kanban-box">
-                        <div class="oe_kanban_global_click" style="padding:14px;">
+                    <t t-name="card">
+                        <div style="padding:4px;">
                             <div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px;">
                                 <span style="font-size:18px;font-weight:800;"><field name="client"/></span>
                                 <span t-if="record.done.value" style="color:#2e7d32;font-weight:700;white-space:nowrap;">&#10003; Entregado</span>
