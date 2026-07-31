@@ -10,6 +10,7 @@ from odoo.http import request
 from odoo.tools import html2plaintext
 
 from ..models.tv_calendar_task import IMPORTANCE_LEVELS
+from ..models.tv_calendar_holidays import holidays_for_years
 
 MONTHS_ES = [
     'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
@@ -63,6 +64,10 @@ class TvCalendarController(http.Controller):
             'month_name': MONTHS_ES[today.month - 1],
             'year': today.year,
         }
+
+        if board.template_type == 'projects':
+            common.update(self._projects_values(board, today))
+            return self._render(board, 'tv_calendar.kiosk_projects', common)
 
         if board.template_type in ('operator', 'mecanizado'):
             is_mecan = board.template_type == 'mecanizado'
@@ -390,6 +395,118 @@ class TvCalendarController(http.Controller):
         tasks = request.env['tv.calendar.task'].sudo().search(domain)
         tasks = tasks.sorted(key=lambda t: t.id)
         return [self._task_vals(t, with_image=with_image) for t in tasks]
+
+    # ------------------------------------------------------------------
+    # Proyectos por entregar
+    # ------------------------------------------------------------------
+    def _projects_values(self, board, today):
+        # Rejilla de 30 dias a partir de hoy, en columnas Lun-Sab (sin domingo).
+        range_start = today
+        range_end = today + timedelta(days=29)
+        grid_start = today - timedelta(days=today.weekday())  # lunes de esta semana
+        grid_end = range_end
+        while grid_end.weekday() != 5:  # avanza hasta el sabado
+            grid_end += timedelta(days=1)
+
+        # Meses de los 2 mini calendarios (los 2 meses siguientes al actual).
+        m1y, m1m = self._add_months(today.year, today.month, 1)
+        m2y, m2m = self._add_months(today.year, today.month, 2)
+        mini_start = date(m1y, m1m, 1)
+        mini_end = date(m2y, m2m, calendar.monthrange(m2y, m2m)[1])
+
+        holidays = holidays_for_years(
+            [grid_start.year, grid_end.year, m1y, m2y])
+
+        Project = request.env['tv.calendar.project'].sudo()
+        projects = Project.search([
+            ('board_ids', 'in', board.id),
+            ('delivery_date', '>=', grid_start),
+            ('delivery_date', '<=', mini_end),
+        ])
+        by_day = {}
+        for p in projects:
+            by_day.setdefault(p.delivery_date, []).append(p)
+        delivery_days = set(by_day.keys())
+
+        # Rejilla principal
+        weeks = []
+        row = []
+        d = grid_start
+        while d <= grid_end:
+            if d.weekday() == 6:  # domingo: se omite
+                d += timedelta(days=1)
+                continue
+            day_projects = sorted(by_day.get(d, []), key=lambda p: (-p.importance_rank, p.id))
+            row.append({
+                'day_num': d.day,
+                'weekday_label': WEEKDAYS_ES[d.weekday()][:3],
+                'is_today': d == today,
+                'in_range': range_start <= d <= range_end,
+                'holiday': holidays.get(d, ''),
+                'projects': [self._project_vals(p) for p in day_projects[:6]],
+                'overflow': max(0, len(day_projects) - 6),
+            })
+            if d.weekday() == 5:  # sabado: cierra la fila
+                weeks.append(row)
+                row = []
+            d += timedelta(days=1)
+        if row:
+            weeks.append(row)
+
+        minis = [
+            self._mini_month(m1y, m1m, today, holidays, delivery_days),
+            self._mini_month(m2y, m2m, today, holidays, delivery_days),
+        ]
+
+        label = '%s %s – %s %s' % (
+            grid_start.day, MONTHS_ABBR[grid_start.month - 1],
+            grid_end.day, MONTHS_ABBR[grid_end.month - 1])
+        return {
+            'title': 'Proyectos por Entregar',
+            'range_label': label,
+            'weekday_names': [WEEKDAYS_ES[i] for i in range(6)],  # Lun-Sab
+            'weeks': weeks,
+            'minis': minis,
+        }
+
+    def _project_vals(self, prj):
+        return {
+            'client': prj.client or '',
+            'order_ref': prj.order_ref or '',
+            'order_date': prj.order_date.strftime('%d/%m/%Y') if prj.order_date else '',
+            'delivery_date': prj.delivery_date.strftime('%d/%m/%Y') if prj.delivery_date else '',
+            'machines': prj.machines or '',
+            'color': prj.importance_hex(),
+            'done': prj.done,
+        }
+
+    def _mini_month(self, year, month, today, holidays, delivery_days):
+        cal = calendar.Calendar(firstweekday=0)  # lunes primero
+        weeks = []
+        for week in cal.monthdatescalendar(year, month):
+            days = []
+            for d in week:
+                if d.weekday() >= 5:  # solo Lun-Vie
+                    continue
+                days.append({
+                    'day_num': d.day,
+                    'in_month': d.month == month,
+                    'is_today': d == today,
+                    'holiday': d in holidays,
+                    'delivery': d in delivery_days,
+                })
+            weeks.append(days)
+        return {
+            'month_name': MONTHS_ES[month - 1],
+            'year': year,
+            'weekday_names': [WEEKDAYS_ES[i][:1] for i in range(5)],  # L M M J V
+            'weeks': weeks,
+        }
+
+    @staticmethod
+    def _add_months(year, month, n):
+        index = (year * 12 + (month - 1)) + n
+        return index // 12, (index % 12) + 1
 
     # ------------------------------------------------------------------
     # Publicidad

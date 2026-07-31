@@ -41,6 +41,7 @@ class TvCalendarBoard(models.Model):
         [
             ('schedule', 'Cronograma principal'),
             ('extended', 'Cronograma Principal Dia Extendido'),
+            ('projects', 'Proyectos por entregar'),
             ('operator', 'Operario'),
             ('mecanizado', 'Mecanizado'),
             ('ad', 'Publicidad'),
@@ -50,6 +51,8 @@ class TvCalendarBoard(models.Model):
              "- Cronograma principal: calendario mensual de tareas.\n"
              "- Cronograma Dia Extendido: dia anterior habil, hoy (doble ancho\n"
              "  con descripcion) y 2 dias habiles siguientes (sin descripcion).\n"
+             "- Proyectos por entregar: 30 dias Lun-Sab con festivos + 2 mini\n"
+             "  calendarios de los meses siguientes.\n"
              "- Operario: horario del turno + EPP y avisos.\n"
              "- Mecanizado: como Operario, horario compacto e imagen por tarea.\n"
              "- Publicidad: una lista de reproduccion de YouTube.")

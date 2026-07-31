@@ -407,6 +407,175 @@
     </template>
 
     <!-- ================================================================ -->
+    <!-- Plantilla Proyectos por entregar (30 dias Lun-Sab + 2 minis)     -->
+    <!-- ================================================================ -->
+    <template id="kiosk_projects" name="TV Calendar Projects">
+        <html t-att-lang="'es'">
+            <head>
+                <meta charset="utf-8"/>
+                <meta name="viewport" content="width=device-width, initial-scale=1"/>
+                <t t-if="refresh_interval and refresh_interval &gt; 0">
+                    <meta http-equiv="refresh" t-att-content="refresh_interval"/>
+                </t>
+                <title t-esc="board.name"/>
+                <style>
+                    :root {
+                        --bg: #eef1f5; --panel: #ffffff; --ink: #1a2233; --muted: #7a8699;
+                        --grid-line: #d5dbe4; --today: #0b57d0; --header-bg: #0b1f3a;
+                        --out: #f4f6f9; --holi: #c62828; --holi-bg: #fdecea;
+                    }
+                    body.theme-dark {
+                        --bg: #0c1220; --panel: #131c2e; --ink: #eef2f8; --muted: #93a1b8;
+                        --grid-line: #26324a; --today: #4f8cff; --header-bg: #050b16;
+                        --out: #0e1626; --holi: #ff6b6b; --holi-bg: #3a1414;
+                    }
+                    * { box-sizing: border-box; margin: 0; padding: 0; }
+                    html, body { height: 100%; }
+                    body { background: var(--bg); color: var(--ink); height: 100vh; display: flex; flex-direction: column;
+                        overflow: hidden; font-family: "Segoe UI", Roboto, Helvetica, Arial, sans-serif; -webkit-font-smoothing: antialiased; }
+                    header.pj-header { background: var(--header-bg); color: #fff; display: flex; align-items: center;
+                        justify-content: space-between; padding: 1vh 1.6vw; flex: 0 0 auto; gap: 1vw; }
+                    .pj-title { display: flex; align-items: baseline; gap: 1vw; flex-wrap: wrap; }
+                    .pj-title .t1 { font-size: clamp(20px, 2.4vw, 42px); font-weight: 800; }
+                    .pj-title .t2 { font-size: clamp(14px, 1.6vw, 28px); font-weight: 700; opacity: .85; }
+                    .pj-title .t3 { font-size: clamp(12px, 1.2vw, 20px); opacity: .7; }
+                    .pj-clock { font-size: clamp(18px, 2vw, 40px); font-weight: 800; white-space: nowrap; font-variant-numeric: tabular-nums; }
+
+                    .pj-main { flex: 1 1 auto; display: flex; min-height: 0; gap: 6px; padding: 6px; }
+                    .pj-left { flex: 78 1 0; min-width: 0; display: flex; flex-direction: column; }
+                    .pj-weekdays { display: grid; grid-template-columns: repeat(6, 1fr); gap: 2px; flex: 0 0 auto; }
+                    .pj-weekdays .wd { text-align: center; font-size: clamp(12px, 1.2vw, 22px); font-weight: 800;
+                        text-transform: uppercase; letter-spacing: .5px; color: var(--muted); padding: .4vh 0; }
+                    .pj-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 2px; flex: 1 1 auto; min-height: 0; padding-top: 2px; }
+                    .pj-cell { background: var(--panel); border: 1px solid var(--grid-line); border-radius: 7px;
+                        padding: .3vh .3vw; display: flex; flex-direction: column; min-height: 0; overflow: hidden; }
+                    .pj-cell.out { background: var(--out); opacity: .5; }
+                    .pj-cell.today { border-color: var(--today); box-shadow: inset 0 0 0 3px var(--today); }
+                    .pj-cell.holi { background: var(--holi-bg); }
+                    .pj-cell .dn { display: flex; justify-content: space-between; align-items: baseline; line-height: 1; margin-bottom: .3vh; }
+                    .pj-cell .dn .wd { font-size: clamp(10px, .95vw, 18px); font-weight: 700; color: var(--muted); text-transform: uppercase; }
+                    .pj-cell .dn .num { font-size: clamp(14px, 1.5vw, 28px); font-weight: 800; }
+                    .pj-cell.today .dn .num, .pj-cell.today .dn .wd { color: var(--today); }
+                    .pj-festivo { color: #fff; background: var(--holi); border-radius: 4px; padding: .1vh .4vw; margin-bottom: .3vh;
+                        font-size: clamp(9px, .82vw, 15px); font-weight: 800; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+                    .pj-projects { display: flex; flex-direction: column; gap: .3vh; overflow: hidden; }
+                    .pj-card { color: #fff; border-radius: 5px; padding: .3vh .5vw; line-height: 1.15; overflow: hidden; }
+                    .pj-card.done { opacity: .55; text-decoration: line-through; }
+                    .pj-card .c-client { font-size: clamp(11px, 1.05vw, 20px); font-weight: 800;
+                        white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+                    .pj-card .c-row { font-size: clamp(9px, .82vw, 15px); font-weight: 500; opacity: .95;
+                        white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+                    .pj-card .c-mac { font-size: clamp(9px, .85vw, 16px); font-weight: 700; margin-top: .1vh;
+                        white-space: normal; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; }
+                    .pj-overflow { font-size: clamp(10px, .9vw, 16px); font-weight: 700; color: var(--muted); padding-left: .2vw; }
+
+                    /* Sidebar mini calendarios */
+                    .pj-side { flex: 22 1 0; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
+                    .pj-mini { flex: 1 1 0; background: var(--panel); border: 1px solid var(--grid-line); border-radius: 8px;
+                        display: flex; flex-direction: column; overflow: hidden; }
+                    .pj-mini .m-cap { background: var(--header-bg); color: #fff; padding: .5vh .8vw; text-align: center;
+                        font-size: clamp(14px, 1.5vw, 26px); font-weight: 800; letter-spacing: .5px; flex: 0 0 auto; }
+                    .pj-mini .m-cap .yr { font-weight: 400; opacity: .7; font-size: .8em; }
+                    .pj-mini .m-wd { display: grid; grid-template-columns: repeat(5, 1fr); flex: 0 0 auto; }
+                    .pj-mini .m-wd span { text-align: center; font-size: clamp(9px, .9vw, 16px); font-weight: 700; color: var(--muted); padding: .3vh 0; }
+                    .pj-mini .m-body { flex: 1 1 auto; display: flex; flex-direction: column; min-height: 0; }
+                    .pj-mini .m-week { display: grid; grid-template-columns: repeat(5, 1fr); flex: 1 1 0; }
+                    .pj-mini .m-day { display: flex; align-items: center; justify-content: center; position: relative;
+                        font-size: clamp(11px, 1.2vw, 22px); font-weight: 700; border-radius: 6px; margin: 1px; }
+                    .pj-mini .m-day.o { color: var(--muted); opacity: .35; }
+                    .pj-mini .m-day.h { background: var(--holi); color: #fff; }
+                    .pj-mini .m-day.t { box-shadow: inset 0 0 0 3px var(--today); color: var(--today); }
+                    .pj-mini .m-day .dot { position: absolute; bottom: 8%; width: 26%; height: 26%; min-width: 5px; min-height: 5px;
+                        border-radius: 50%; background: var(--today); }
+                    .pj-mini .m-day.h .dot { background: #fff; }
+                </style>
+            </head>
+            <body t-attf-class="theme-#{theme}">
+                <header class="pj-header">
+                    <div class="pj-title">
+                        <span class="t1" t-esc="title"/>
+                        <span class="t2" t-esc="range_label"/>
+                        <span class="t3" t-esc="board.name"/>
+                    </div>
+                    <span class="pj-clock" id="tvc-clock" t-esc="now_label"/>
+                </header>
+                <div class="pj-main">
+                    <div class="pj-left">
+                        <div class="pj-weekdays">
+                            <t t-foreach="weekday_names" t-as="wd"><div class="wd" t-esc="wd"/></t>
+                        </div>
+                        <div class="pj-grid" t-attf-style="grid-template-rows: repeat(#{len(weeks)}, 1fr);">
+                            <t t-foreach="weeks" t-as="week">
+                                <t t-foreach="week" t-as="day">
+                                    <div t-attf-class="pj-cell#{' out' if not day['in_range'] else ''}#{' today' if day['is_today'] else ''}#{' holi' if day['holiday'] else ''}">
+                                        <div class="dn">
+                                            <span class="wd" t-esc="day['weekday_label']"/>
+                                            <span class="num" t-esc="day['day_num']"/>
+                                        </div>
+                                        <t t-if="day['holiday']">
+                                            <div class="pj-festivo" t-att-title="day['holiday']">FESTIVO: <t t-esc="day['holiday']"/></div>
+                                        </t>
+                                        <div class="pj-projects">
+                                            <t t-foreach="day['projects']" t-as="p">
+                                                <div t-attf-class="pj-card#{' done' if p['done'] else ''}" t-attf-style="background:#{p['color']}">
+                                                    <div class="c-client" t-esc="p['client']"/>
+                                                    <t t-if="p['order_ref']"><div class="c-row">OC/Cot: <t t-esc="p['order_ref']"/></div></t>
+                                                    <t t-if="p['order_date']"><div class="c-row">Orden: <t t-esc="p['order_date']"/></div></t>
+                                                    <div class="c-row">Entrega: <t t-esc="p['delivery_date']"/></div>
+                                                    <t t-if="p['machines']"><div class="c-mac" t-esc="p['machines']"/></t>
+                                                </div>
+                                            </t>
+                                            <t t-if="day['overflow']">
+                                                <div class="pj-overflow">+<t t-esc="day['overflow']"/> mas</div>
+                                            </t>
+                                        </div>
+                                    </div>
+                                </t>
+                            </t>
+                        </div>
+                    </div>
+                    <div class="pj-side">
+                        <t t-foreach="minis" t-as="mini">
+                            <div class="pj-mini">
+                                <div class="m-cap"><t t-esc="mini['month_name']"/> <span class="yr" t-esc="mini['year']"/></div>
+                                <div class="m-wd">
+                                    <t t-foreach="mini['weekday_names']" t-as="w"><span t-esc="w"/></t>
+                                </div>
+                                <div class="m-body">
+                                    <t t-foreach="mini['weeks']" t-as="mweek">
+                                        <div class="m-week">
+                                            <t t-foreach="mweek" t-as="md">
+                                                <div t-attf-class="m-day#{' o' if not md['in_month'] else ''}#{' h' if (md['in_month'] and md['holiday']) else ''}#{' t' if md['is_today'] else ''}">
+                                                    <t t-esc="md['day_num']"/>
+                                                    <t t-if="md['in_month'] and md['delivery']"><span class="dot"/></t>
+                                                </div>
+                                            </t>
+                                        </div>
+                                    </t>
+                                </div>
+                            </div>
+                        </t>
+                    </div>
+                </div>
+                <script type="text/javascript">
+                    (function () {
+                        var el = document.getElementById('tvc-clock');
+                        if (!el) { return; }
+                        function pad(n) { return (n &lt; 10 ? '0' : '') + n; }
+                        function tick() {
+                            var d = new Date(); var h = d.getHours(); var ap = h &lt; 12 ? 'am' : 'pm';
+                            var h12 = h % 12; if (h12 === 0) { h12 = 12; }
+                            el.textContent = pad(d.getDate()) + '/' + pad(d.getMonth() + 1) + '/' + d.getFullYear() +
+                                ' ' + pad(h12) + ':' + pad(d.getMinutes()) + ' ' + ap;
+                        }
+                        tick(); setInterval(tick, 15000);
+                    })();
+                </script>
+            </body>
+        </html>
+    </template>
+
+    <!-- ================================================================ -->
     <!-- Plantilla 3: Publicidad (playlist de YouTube a pantalla completa) -->
     <!-- ================================================================ -->
     <template id="kiosk_ad" name="TV Calendar Ad">
