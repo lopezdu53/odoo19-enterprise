@@ -13,7 +13,19 @@ DELIVERY_TYPES = [
     ('sat', 'Pruebas SAT'),
     ('service', 'Servicio Tecnico'),
     ('warranty', 'Garantia'),
+    ('logistics', 'Logistica'),
 ]
+
+# Colores propios por tipo de entrega (distintos de los de prioridad:
+# verde / azul / naranja / rojo). 'project' usa el color de prioridad.
+DELIVERY_TYPE_COLORS = {
+    'installation': '#7b1fa2',  # purpura
+    'fat': '#00838f',           # teal
+    'sat': '#5d4037',           # marron
+    'service': '#c2185b',       # magenta / rosa
+    'warranty': '#455a64',      # gris azulado
+    'logistics': '#827717',     # oliva
+}
 
 
 def _bar(pct, color):

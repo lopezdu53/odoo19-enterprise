@@ -11,7 +11,7 @@ from odoo.tools import html2plaintext
 
 from ..models.tv_calendar_task import IMPORTANCE_LEVELS
 from ..models.tv_calendar_holidays import holidays_for_years
-from ..models.tv_calendar_project import DELIVERY_TYPES
+from ..models.tv_calendar_project import DELIVERY_TYPES, DELIVERY_TYPE_COLORS
 
 DELIVERY_TYPE_LABELS = dict(DELIVERY_TYPES)
 
@@ -464,15 +464,29 @@ class TvCalendarController(http.Controller):
         label = '%s %s – %s %s' % (
             grid_start.day, MONTHS_ABBR[grid_start.month - 1],
             grid_end.day, MONTHS_ABBR[grid_end.month - 1])
+        type_legend = [
+            {'label': lbl, 'color': DELIVERY_TYPE_COLORS[key]}
+            for key, lbl in DELIVERY_TYPES if key != 'project'
+        ]
+        priority_legend = [
+            {'label': IMPORTANCE_LEVELS[k]['label'], 'color': IMPORTANCE_LEVELS[k]['color']}
+            for k in ('critical', 'high', 'normal', 'low')
+        ]
         return {
             'title': 'Proyectos por Entregar',
             'range_label': label,
             'weekday_names': [WEEKDAYS_ES[i] for i in range(6)],  # Lun-Sab
             'weeks': weeks,
             'minis': minis,
+            'type_legend': type_legend,
+            'priority_legend': priority_legend,
         }
 
     def _project_vals(self, prj):
+        if prj.delivery_type == 'project':
+            color = prj.importance_hex()
+        else:
+            color = DELIVERY_TYPE_COLORS.get(prj.delivery_type) or prj.importance_hex()
         return {
             'client': prj.client or '',
             'delivery_type': prj.delivery_type,
@@ -481,7 +495,7 @@ class TvCalendarController(http.Controller):
             'order_date': prj.order_date.strftime('%d/%m/%Y') if prj.order_date else '',
             'delivery_date': prj.delivery_date.strftime('%d/%m/%Y') if prj.delivery_date else '',
             'machines': prj.machines or '',
-            'color': prj.importance_hex(),
+            'color': color,
             'done': prj.done,
             'progress': prj.progress,
             'done_count': prj.task_done_count,

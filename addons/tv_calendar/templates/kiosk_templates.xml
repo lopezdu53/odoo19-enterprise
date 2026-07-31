@@ -440,12 +440,18 @@
                     .pj-title .t2 { font-size: clamp(14px, 1.6vw, 28px); font-weight: 700; opacity: .85; }
                     .pj-title .t3 { font-size: clamp(12px, 1.2vw, 20px); opacity: .7; }
                     .pj-clock { font-size: clamp(18px, 2vw, 40px); font-weight: 800; white-space: nowrap; font-variant-numeric: tabular-nums; }
+                    .pj-legend { flex: 1 1 auto; display: flex; flex-direction: column; gap: 2px; align-items: flex-start;
+                        padding: 0 1vw; overflow: hidden; min-width: 0; }
+                    .pj-legend .lg-group { display: flex; align-items: center; gap: .7vw; flex-wrap: wrap; }
+                    .pj-legend .lg-title { font-size: clamp(8px, .78vw, 14px); font-weight: 800; opacity: .8; }
+                    .pj-legend .lg-item { display: flex; align-items: center; gap: .25vw; font-size: clamp(8px, .78vw, 14px); font-weight: 600; }
+                    .pj-legend .lg-dot { width: .9vw; height: .9vw; min-width: 9px; min-height: 9px; border-radius: 3px; }
 
                     .pj-main { flex: 1 1 auto; display: flex; min-height: 0; gap: 6px; padding: 6px; }
                     .pj-left { flex: 78 1 0; min-width: 0; display: flex; flex-direction: column; }
                     .pj-weekdays { display: grid; grid-template-columns: repeat(6, 1fr); gap: 2px; flex: 0 0 auto; }
-                    .pj-weekdays .wd { text-align: center; font-size: clamp(12px, 1.2vw, 22px); font-weight: 800;
-                        text-transform: uppercase; letter-spacing: .5px; color: var(--muted); padding: .4vh 0; }
+                    .pj-weekdays .wd { text-align: center; font-size: clamp(9px, .85vw, 16px); font-weight: 800;
+                        text-transform: uppercase; letter-spacing: .5px; color: var(--muted); padding: .35vh 0; }
                     .pj-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 2px; flex: 1 1 auto; min-height: 0; padding-top: 2px; }
                     .pj-cell { background: var(--panel); border: 1px solid var(--grid-line); border-radius: 7px;
                         padding: .3vh .3vw; display: flex; flex-direction: column; min-height: 0; overflow: hidden; }
@@ -453,40 +459,40 @@
                     .pj-cell.today { border-color: var(--today); box-shadow: inset 0 0 0 3px var(--today); }
                     .pj-cell.holi { background: var(--holi-bg); }
                     .pj-cell .dn { display: flex; justify-content: space-between; align-items: baseline; line-height: 1; margin-bottom: .3vh; }
-                    .pj-cell .dn .wd { font-size: clamp(10px, .95vw, 18px); font-weight: 700; color: var(--muted); text-transform: uppercase; }
-                    .pj-cell .dn .num { font-size: clamp(14px, 1.5vw, 28px); font-weight: 800; }
+                    .pj-cell .dn .wd { font-size: clamp(7px, .68vw, 13px); font-weight: 700; color: var(--muted); text-transform: uppercase; }
+                    .pj-cell .dn .num { font-size: clamp(11px, 1.1vw, 21px); font-weight: 800; }
                     .pj-cell.today .dn .num, .pj-cell.today .dn .wd { color: var(--today); }
-                    .pj-festivo { color: #fff; background: var(--holi); border-radius: 4px; padding: .1vh .4vw; margin-bottom: .3vh;
-                        font-size: clamp(9px, .82vw, 15px); font-weight: 800; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+                    .pj-festivo { color: #fff; background: var(--holi); border-radius: 4px; padding: .1vh .4vw; margin-bottom: .25vh;
+                        font-size: clamp(6px, .58vw, 11px); font-weight: 800; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
                     .pj-projects { display: flex; flex-direction: column; gap: .3vh; overflow: hidden; }
-                    .pj-card { color: #fff; border-radius: 5px; padding: .25vh .45vw; line-height: 1.1; overflow: hidden;
-                        display: flex; flex-direction: row; gap: .45vw; align-items: stretch; }
+                    .pj-card { color: #fff; border-radius: 5px; padding: .2vh .4vw; line-height: 1.08; overflow: hidden;
+                        display: flex; flex-direction: row; gap: .4vw; align-items: stretch; }
                     .pj-card.done { opacity: .55; text-decoration: line-through; }
                     .pj-card .pc-main { flex: 0 0 60%; max-width: 60%; min-width: 0; }
                     .pj-card .pc-dates { flex: 0 0 40%; max-width: 40%; min-width: 0;
-                        border-left: 2px solid rgba(255,255,255,.35); padding-left: .45vw; }
-                    .pj-card .c-client { font-size: clamp(9px, .9vw, 17px); font-weight: 800;
+                        border-left: 2px solid rgba(255,255,255,.35); padding-left: .4vw; }
+                    .pj-card .c-client { font-size: clamp(7px, .63vw, 12px); font-weight: 800;
                         white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-                    .pj-card .c-row { font-size: clamp(8px, .72vw, 13px); font-weight: 500; opacity: .95;
+                    .pj-card .c-row { font-size: clamp(6px, .5vw, 9px); font-weight: 500; opacity: .95;
                         white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-                    .pj-card .c-prog { margin-bottom: .3vh; }
-                    .pj-card .c-prog .c-progbar { background: rgba(255,255,255,.3); border-radius: 4px;
-                        height: .85vh; min-height: 5px; overflow: hidden; }
+                    .pj-card .c-prog { margin-bottom: .25vh; }
+                    .pj-card .c-prog .c-progbar { background: rgba(255,255,255,.3); border-radius: 3px;
+                        height: .7vh; min-height: 4px; overflow: hidden; }
                     .pj-card .c-prog .c-progfill { background: #fff; height: 100%; }
-                    .pj-card .c-prog .c-progtxt { font-size: clamp(8px, .74vw, 13px); font-weight: 800;
+                    .pj-card .c-prog .c-progtxt { font-size: clamp(6px, .52vw, 10px); font-weight: 800;
                         margin-top: .1vh; white-space: nowrap; }
-                    .pj-card .c-date { margin-bottom: .2vh; }
-                    .pj-card .c-date .c-lbl { display: block; font-size: clamp(7px, .62vw, 11px); font-weight: 600;
-                        opacity: .8; text-transform: uppercase; letter-spacing: .3px; line-height: 1.05; }
-                    .pj-card .c-date .c-val { display: block; font-size: clamp(9px, .82vw, 15px); font-weight: 800;
-                        line-height: 1.1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-                    .pj-card .c-mac { font-size: clamp(8px, .74vw, 14px); font-weight: 700; margin-top: .1vh;
+                    .pj-card .c-date { margin-bottom: .15vh; }
+                    .pj-card .c-date .c-lbl { display: block; font-size: clamp(5px, .44vw, 8px); font-weight: 600;
+                        opacity: .8; text-transform: uppercase; letter-spacing: .2px; line-height: 1.02; }
+                    .pj-card .c-date .c-val { display: block; font-size: clamp(7px, .58vw, 11px); font-weight: 800;
+                        line-height: 1.05; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+                    .pj-card .c-mac { font-size: clamp(6px, .52vw, 10px); font-weight: 700; margin-top: .1vh;
                         white-space: normal; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; }
                     /* Tipos que solo muestran el cliente */
-                    .pj-card.simple { flex-direction: column; align-items: flex-start; justify-content: center; gap: .3vh; }
-                    .pj-card.simple .c-type { font-size: clamp(8px, .72vw, 13px); font-weight: 800; text-transform: uppercase;
-                        letter-spacing: .3px; background: rgba(0,0,0,.22); border-radius: 4px; padding: .1vh .5vw; }
-                    .pj-card.simple .c-client-big { font-size: clamp(11px, 1.15vw, 22px); font-weight: 800; line-height: 1.1;
+                    .pj-card.simple { flex-direction: column; align-items: flex-start; justify-content: center; gap: .2vh; }
+                    .pj-card.simple .c-type { font-size: clamp(6px, .5vw, 9px); font-weight: 800; text-transform: uppercase;
+                        letter-spacing: .2px; background: rgba(0,0,0,.22); border-radius: 3px; padding: .1vh .4vw; }
+                    .pj-card.simple .c-client-big { font-size: clamp(8px, .8vw, 15px); font-weight: 800; line-height: 1.05;
                         white-space: normal; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; }
                     .pj-overflow { font-size: clamp(10px, .9vw, 16px); font-weight: 700; color: var(--muted); padding-left: .2vw; }
 
@@ -517,6 +523,20 @@
                         <span class="t1" t-esc="title"/>
                         <span class="t2" t-esc="range_label"/>
                         <span class="t3" t-esc="board.name"/>
+                    </div>
+                    <div class="pj-legend">
+                        <div class="lg-group">
+                            <span class="lg-title">Tipo:</span>
+                            <t t-foreach="type_legend" t-as="lg">
+                                <span class="lg-item"><span class="lg-dot" t-attf-style="background:#{lg['color']}"/><t t-esc="lg['label']"/></span>
+                            </t>
+                        </div>
+                        <div class="lg-group">
+                            <span class="lg-title">Prioridad:</span>
+                            <t t-foreach="priority_legend" t-as="lg">
+                                <span class="lg-item"><span class="lg-dot" t-attf-style="background:#{lg['color']}"/><t t-esc="lg['label']"/></span>
+                            </t>
+                        </div>
                     </div>
                     <span class="pj-clock" id="tvc-clock" t-esc="now_label"/>
                 </header>
