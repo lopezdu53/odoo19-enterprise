@@ -440,12 +440,12 @@
                     .pj-title .t2 { font-size: clamp(14px, 1.6vw, 28px); font-weight: 700; opacity: .85; }
                     .pj-title .t3 { font-size: clamp(12px, 1.2vw, 20px); opacity: .7; }
                     .pj-clock { font-size: clamp(18px, 2vw, 40px); font-weight: 800; white-space: nowrap; font-variant-numeric: tabular-nums; }
-                    .pj-legend { flex: 1 1 auto; display: flex; flex-direction: column; gap: 2px; align-items: flex-start;
-                        padding: 0 1vw; overflow: hidden; min-width: 0; }
-                    .pj-legend .lg-group { display: flex; align-items: center; gap: .7vw; flex-wrap: wrap; }
-                    .pj-legend .lg-title { font-size: clamp(8px, .78vw, 14px); font-weight: 800; opacity: .8; }
-                    .pj-legend .lg-item { display: flex; align-items: center; gap: .25vw; font-size: clamp(8px, .78vw, 14px); font-weight: 600; }
-                    .pj-legend .lg-dot { width: .9vw; height: .9vw; min-width: 9px; min-height: 9px; border-radius: 3px; }
+                    .pj-legend { flex: 1 1 auto; display: flex; flex-direction: row; flex-wrap: nowrap; gap: 1vw;
+                        align-items: center; justify-content: center; padding: 0 1vw; overflow: hidden; min-width: 0; }
+                    .pj-legend .lg-group { display: flex; align-items: center; gap: .55vw; flex-wrap: nowrap; white-space: nowrap; }
+                    .pj-legend .lg-title { font-size: clamp(7px, .72vw, 13px); font-weight: 800; opacity: .8; }
+                    .pj-legend .lg-item { display: flex; align-items: center; gap: .2vw; font-size: clamp(7px, .72vw, 13px); font-weight: 600; white-space: nowrap; }
+                    .pj-legend .lg-dot { width: .8vw; height: .8vw; min-width: 8px; min-height: 8px; border-radius: 3px; }
 
                     .pj-main { flex: 1 1 auto; display: flex; min-height: 0; gap: 6px; padding: 6px; }
                     .pj-left { flex: 78 1 0; min-width: 0; display: flex; flex-direction: column; }
@@ -580,8 +580,8 @@
                                                     </div>
                                                 </t>
                                                 <t t-else="">
-                                                    <div t-attf-class="pj-card simple#{' done' if p['done'] else ''}" t-attf-style="background:#{p['color']}">
-                                                        <div class="c-type" t-esc="p['type_label']"/>
+                                                    <div t-attf-class="pj-card simple#{' done' if p['done'] else ''}"
+                                                         t-attf-style="background:#{p['color']}" t-att-title="p['type_label']">
                                                         <div class="c-client-big" t-esc="p['client']"/>
                                                     </div>
                                                 </t>

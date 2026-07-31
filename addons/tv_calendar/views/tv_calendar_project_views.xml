@@ -43,6 +43,7 @@
                             <field name="order_ref"/>
                             <field name="order_date"/>
                             <field name="delivery_date"/>
+                            <field name="delivery_date_end"/>
                         </group>
                         <group>
                             <field name="board_ids" widget="many2many_tags"
@@ -155,7 +156,8 @@
         <field name="name">tv.calendar.project.calendar</field>
         <field name="model">tv.calendar.project</field>
         <field name="arch" type="xml">
-            <calendar string="Entregas" date_start="delivery_date" color="importance" mode="month">
+            <calendar string="Entregas" date_start="delivery_date" date_stop="delivery_date_end"
+                      color="importance" mode="month">
                 <field name="client"/>
                 <field name="importance" filters="1"/>
                 <field name="board_ids"/>

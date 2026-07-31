@@ -61,6 +61,10 @@ class TvCalendarProject(models.Model):
     delivery_date = fields.Date(
         string='Fecha de entrega', required=True, index=True,
         default=fields.Date.context_today, tracking=True)
+    delivery_date_end = fields.Date(
+        string='Fecha de entrega (fin)', tracking=True,
+        help="Opcional. Para servicios que duran varios dias: se muestra en "
+             "cada dia del rango en el TV.")
     machines = fields.Text(string='Maquinas a entregar')
     importance = fields.Selection(
         IMPORTANCE_SELECTION, string='Prioridad', required=True,
@@ -133,12 +137,15 @@ class TvCalendarProject(models.Model):
             prj.importance_rank = level['rank']
             prj.color = level['kanban_color']
 
-    @api.constrains('order_date', 'delivery_date')
+    @api.constrains('order_date', 'delivery_date', 'delivery_date_end')
     def _check_dates(self):
         for prj in self:
             if prj.order_date and prj.delivery_date and prj.delivery_date < prj.order_date:
                 raise ValidationError(
                     "La fecha de entrega no puede ser anterior a la fecha de orden.")
+            if prj.delivery_date_end and prj.delivery_date and prj.delivery_date_end < prj.delivery_date:
+                raise ValidationError(
+                    "La fecha de entrega (fin) no puede ser anterior a la de entrega.")
 
     @api.constrains('board_ids')
     def _check_board(self):

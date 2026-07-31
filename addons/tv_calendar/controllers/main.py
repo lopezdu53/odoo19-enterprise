@@ -421,14 +421,25 @@ class TvCalendarController(http.Controller):
             [grid_start.year, grid_end.year, m1y, m2y])
 
         Project = request.env['tv.calendar.project'].sudo()
+        # Proyectos que se solapan con la ventana [grid_start, mini_end].
         projects = Project.search([
             ('board_ids', 'in', board.id),
-            ('delivery_date', '>=', grid_start),
             ('delivery_date', '<=', mini_end),
+            '|',
+            '&', ('delivery_date_end', '!=', False), ('delivery_date_end', '>=', grid_start),
+            '&', ('delivery_date_end', '=', False), ('delivery_date', '>=', grid_start),
         ])
         by_day = {}
         for p in projects:
-            by_day.setdefault(p.delivery_date, []).append(p)
+            start = p.delivery_date
+            end = p.delivery_date_end or p.delivery_date
+            if end < start:
+                end = start
+            d = max(start, grid_start)
+            last = min(end, mini_end)
+            while d <= last:
+                by_day.setdefault(d, []).append(p)
+                d += timedelta(days=1)
         delivery_days = set(by_day.keys())
 
         # Rejilla principal
