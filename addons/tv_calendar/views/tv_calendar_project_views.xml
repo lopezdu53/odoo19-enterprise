@@ -27,6 +27,11 @@
         <field name="arch" type="xml">
             <form string="Proyecto por entregar">
                 <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button class="oe_stat_button" icon="fa-tasks" disabled="1">
+                            <field name="task_count" widget="statinfo" string="Tareas"/>
+                        </button>
+                    </div>
                     <div class="oe_title">
                         <label for="client"/>
                         <h1><field name="client" placeholder="Nombre del cliente"/></h1>
@@ -48,6 +53,96 @@
                         <field name="machines" nolabel="1"
                                placeholder="Lista de maquinas / equipos a entregar..."/>
                     </group>
+                    <notebook>
+                        <page string="1. Pedidos Nac./Int.">
+                            <field name="tasks_pedidos">
+                                <list editable="bottom">
+                                    <field name="name"/>
+                                    <field name="board_ids" widget="many2many_tags" options="{'no_quick_create': True}"/>
+                                    <field name="date"/>
+                                    <field name="importance"/>
+                                    <field name="done" widget="boolean_toggle"/>
+                                </list>
+                            </field>
+                        </page>
+                        <page string="2. Soldadura">
+                            <field name="tasks_soldadura">
+                                <list editable="bottom">
+                                    <field name="name"/>
+                                    <field name="board_ids" widget="many2many_tags" options="{'no_quick_create': True}"/>
+                                    <field name="date"/>
+                                    <field name="importance"/>
+                                    <field name="done" widget="boolean_toggle"/>
+                                </list>
+                            </field>
+                        </page>
+                        <page string="3. Torno">
+                            <field name="tasks_torno">
+                                <list editable="bottom">
+                                    <field name="name"/>
+                                    <field name="board_ids" widget="many2many_tags" options="{'no_quick_create': True}"/>
+                                    <field name="date"/>
+                                    <field name="importance"/>
+                                    <field name="done" widget="boolean_toggle"/>
+                                </list>
+                            </field>
+                        </page>
+                        <page string="4. Control y Automatizacion">
+                            <field name="tasks_control">
+                                <list editable="bottom">
+                                    <field name="name"/>
+                                    <field name="board_ids" widget="many2many_tags" options="{'no_quick_create': True}"/>
+                                    <field name="date"/>
+                                    <field name="importance"/>
+                                    <field name="done" widget="boolean_toggle"/>
+                                </list>
+                            </field>
+                        </page>
+                        <page string="5. Armado">
+                            <field name="tasks_armado">
+                                <list editable="bottom">
+                                    <field name="name"/>
+                                    <field name="board_ids" widget="many2many_tags" options="{'no_quick_create': True}"/>
+                                    <field name="date"/>
+                                    <field name="importance"/>
+                                    <field name="done" widget="boolean_toggle"/>
+                                </list>
+                            </field>
+                        </page>
+                        <page string="6. Pruebas FAT">
+                            <field name="tasks_fat">
+                                <list editable="bottom">
+                                    <field name="name"/>
+                                    <field name="board_ids" widget="many2many_tags" options="{'no_quick_create': True}"/>
+                                    <field name="date"/>
+                                    <field name="importance"/>
+                                    <field name="done" widget="boolean_toggle"/>
+                                </list>
+                            </field>
+                        </page>
+                        <page string="7. Logistica de Despacho">
+                            <field name="tasks_logistica">
+                                <list editable="bottom">
+                                    <field name="name"/>
+                                    <field name="board_ids" widget="many2many_tags" options="{'no_quick_create': True}"/>
+                                    <field name="date"/>
+                                    <field name="importance"/>
+                                    <field name="done" widget="boolean_toggle"/>
+                                </list>
+                            </field>
+                        </page>
+                        <page string="8. Instalacion y Capacitacion">
+                            <field name="tasks_instalacion">
+                                <list editable="bottom">
+                                    <field name="name"/>
+                                    <field name="board_ids" widget="many2many_tags" options="{'no_quick_create': True}"/>
+                                    <field name="date"/>
+                                    <field name="importance"/>
+                                    <field name="done" widget="boolean_toggle"/>
+                                </list>
+                            </field>
+                        </page>
+                    </notebook>
                 </sheet>
                 <chatter/>
             </form>

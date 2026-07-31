@@ -21,6 +21,18 @@ IMPORTANCE_SELECTION = [
     ('critical', 'Critica'),
 ]
 
+# Etapas de un proyecto por entregar (una pestana por etapa en el proyecto).
+PROJECT_STAGES = [
+    ('pedidos', '1. Pedidos Nacionales e Internacionales'),
+    ('soldadura', '2. Soldadura'),
+    ('torno', '3. Torno'),
+    ('control', '4. Control y Automatizacion'),
+    ('armado', '5. Armado'),
+    ('fat', '6. Pruebas FAT'),
+    ('logistica', '7. Logistica de Despacho'),
+    ('instalacion', '8. Instalacion y Capacitacion'),
+]
+
 
 class TvCalendarTask(models.Model):
     _name = 'tv.calendar.task'
@@ -48,6 +60,9 @@ class TvCalendarTask(models.Model):
     color = fields.Integer(
         string='Color', compute='_compute_importance_meta', store=True,
         help="Color usado por la vista calendario del backend.")
+    project_id = fields.Many2one(
+        'tv.calendar.project', string='Proyecto', ondelete='set null', index=True)
+    stage = fields.Selection(PROJECT_STAGES, string='Etapa')
     user_id = fields.Many2one(
         'res.users', string='Responsable',
         default=lambda self: self.env.user, tracking=True)

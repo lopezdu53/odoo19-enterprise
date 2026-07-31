@@ -4,6 +4,15 @@ from odoo.exceptions import ValidationError
 from .tv_calendar_task import IMPORTANCE_LEVELS, IMPORTANCE_SELECTION
 
 
+def _stage_o2m(stage):
+    """One2many de tareas del proyecto filtrado por etapa (y que fija la etapa
+    en las tareas nuevas creadas desde esa pestana)."""
+    return fields.One2many(
+        'tv.calendar.task', 'project_id',
+        domain=[('stage', '=', stage)],
+        context={'default_stage': stage})
+
+
 class TvCalendarProject(models.Model):
     _name = 'tv.calendar.project'
     _description = 'Proyecto por entregar'
@@ -28,6 +37,23 @@ class TvCalendarProject(models.Model):
         'tv.calendar.board', 'tv_calendar_project_board_rel', 'project_id', 'board_id',
         string='Tableros', required=True,
         help="Tableros (TV) de tipo Proyectos donde se muestra esta entrega.")
+
+    # Tareas del proyecto, agrupadas por etapa (una pestana por etapa).
+    task_ids = fields.One2many('tv.calendar.task', 'project_id', string='Tareas')
+    task_count = fields.Integer(compute='_compute_task_count')
+    tasks_pedidos = _stage_o2m('pedidos')
+    tasks_soldadura = _stage_o2m('soldadura')
+    tasks_torno = _stage_o2m('torno')
+    tasks_control = _stage_o2m('control')
+    tasks_armado = _stage_o2m('armado')
+    tasks_fat = _stage_o2m('fat')
+    tasks_logistica = _stage_o2m('logistica')
+    tasks_instalacion = _stage_o2m('instalacion')
+
+    @api.depends('task_ids')
+    def _compute_task_count(self):
+        for prj in self:
+            prj.task_count = len(prj.task_ids)
 
     @api.depends('importance')
     def _compute_importance_meta(self):

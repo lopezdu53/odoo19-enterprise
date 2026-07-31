@@ -41,6 +41,8 @@
                         <group>
                             <field name="date"/>
                             <field name="date_end"/>
+                            <field name="project_id"/>
+                            <field name="stage" invisible="not project_id"/>
                         </group>
                     </group>
                     <group string="Descripcion">
