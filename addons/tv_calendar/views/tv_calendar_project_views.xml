@@ -177,6 +177,47 @@
         </field>
     </record>
 
+    <record id="view_tv_calendar_project_kanban" model="ir.ui.view">
+        <field name="name">tv.calendar.project.kanban.dashboard</field>
+        <field name="model">tv.calendar.project</field>
+        <field name="arch" type="xml">
+            <kanban default_order="done, delivery_date" records_draggable="0">
+                <field name="client"/>
+                <field name="delivery_date"/>
+                <field name="order_ref"/>
+                <field name="progress_html"/>
+                <field name="done"/>
+                <templates>
+                    <t t-name="kanban-box">
+                        <div class="oe_kanban_global_click" style="padding:14px;">
+                            <div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px;">
+                                <span style="font-size:18px;font-weight:800;"><field name="client"/></span>
+                                <span t-if="record.done.value" style="color:#2e7d32;font-weight:700;white-space:nowrap;">&#10003; Entregado</span>
+                            </div>
+                            <div style="opacity:.7;margin:2px 0 10px;">
+                                Entrega: <field name="delivery_date"/>
+                                <t t-if="record.order_ref.value"> · OC/Cot: <field name="order_ref"/></t>
+                            </div>
+                            <field name="progress_html" widget="html"/>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <record id="action_tv_calendar_dashboard" model="ir.actions.act_window">
+        <field name="name">Dashboard</field>
+        <field name="res_model">tv.calendar.project</field>
+        <field name="view_mode">kanban,list,form</field>
+        <field name="view_id" ref="view_tv_calendar_project_kanban"/>
+        <field name="search_view_id" ref="view_tv_calendar_project_search"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Aun no hay proyectos</p>
+            <p>Aqui veras el avance de cada proyecto y sus 8 etapas.</p>
+        </field>
+    </record>
+
     <record id="action_tv_calendar_project" model="ir.actions.act_window">
         <field name="name">Proyectos por entregar</field>
         <field name="res_model">tv.calendar.project</field>
@@ -188,7 +229,11 @@
         </field>
     </record>
 
+    <menuitem id="menu_tv_calendar_dashboard" name="Dashboard"
+              parent="menu_tv_calendar_root"
+              action="action_tv_calendar_dashboard" sequence="5"/>
+
     <menuitem id="menu_tv_calendar_projects" name="Proyectos por entregar"
               parent="menu_tv_calendar_root"
-              action="action_tv_calendar_project" sequence="15"/>
+              action="action_tv_calendar_project" sequence="10"/>
 </odoo>

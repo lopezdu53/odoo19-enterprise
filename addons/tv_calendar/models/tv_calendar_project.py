@@ -1,7 +1,16 @@
+from markupsafe import Markup
+
 from odoo import api, fields, models
 from odoo.exceptions import ValidationError
 
-from .tv_calendar_task import IMPORTANCE_LEVELS, IMPORTANCE_SELECTION
+from .tv_calendar_task import IMPORTANCE_LEVELS, IMPORTANCE_SELECTION, PROJECT_STAGES
+
+
+def _bar(pct, color):
+    return Markup(
+        '<div style="background:#e2e6ee;border-radius:5px;height:12px;overflow:hidden;">'
+        '<div style="width:%d%%;background:%s;height:12px;"></div></div>'
+    ) % (pct, color)
 
 
 def _stage_o2m(stage):
@@ -50,10 +59,46 @@ class TvCalendarProject(models.Model):
     tasks_logistica = _stage_o2m('logistica')
     tasks_instalacion = _stage_o2m('instalacion')
 
+    task_done_count = fields.Integer(compute='_compute_dashboard')
+    progress = fields.Integer(string='Avance (%)', compute='_compute_dashboard')
+    progress_html = fields.Html(
+        string='Avance por etapa', compute='_compute_dashboard', sanitize=False)
+
     @api.depends('task_ids')
     def _compute_task_count(self):
         for prj in self:
             prj.task_count = len(prj.task_ids)
+
+    @api.depends('task_ids.done', 'task_ids.stage')
+    def _compute_dashboard(self):
+        for prj in self:
+            tasks = prj.task_ids
+            total = len(tasks)
+            done = len(tasks.filtered('done'))
+            prj.task_done_count = done
+            prj.progress = int(round(done * 100.0 / total)) if total else 0
+
+            parts = [Markup(
+                '<div style="display:flex;justify-content:space-between;'
+                'font-weight:800;margin-bottom:3px;">'
+                '<span>Avance total</span><span>%d/%d (%d%%)</span></div>'
+            ) % (done, total, prj.progress)]
+            parts.append(_bar(prj.progress, '#0b57d0'))
+            parts.append(Markup('<div style="height:10px;"></div>'))
+            for key, label in PROJECT_STAGES:
+                st = tasks.filtered(lambda t, k=key: t.stage == k)
+                st_total = len(st)
+                st_done = len(st.filtered('done'))
+                pct = int(round(st_done * 100.0 / st_total)) if st_total else 0
+                color = '#2e7d32' if (st_total and pct == 100) else (
+                    '#ef6c00' if st_total else '#9aa4b2')
+                parts.append(Markup(
+                    '<div style="display:flex;justify-content:space-between;'
+                    'font-size:13px;margin:5px 0 2px;">'
+                    '<span>%s</span><span>%d/%d</span></div>'
+                ) % (label, st_done, st_total))
+                parts.append(_bar(pct, color))
+            prj.progress_html = Markup('').join(parts)
 
     @api.depends('importance')
     def _compute_importance_meta(self):
