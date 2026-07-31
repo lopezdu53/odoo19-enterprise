@@ -7,6 +7,7 @@
             <list string="Proyectos" decoration-muted="done">
                 <field name="delivery_date"/>
                 <field name="client"/>
+                <field name="delivery_type"/>
                 <field name="order_ref"/>
                 <field name="order_date" optional="show"/>
                 <field name="machines" optional="hide"/>
@@ -38,6 +39,7 @@
                     </div>
                     <group>
                         <group>
+                            <field name="delivery_type"/>
                             <field name="order_ref"/>
                             <field name="order_date"/>
                             <field name="delivery_date"/>

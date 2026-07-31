@@ -459,23 +459,35 @@
                     .pj-festivo { color: #fff; background: var(--holi); border-radius: 4px; padding: .1vh .4vw; margin-bottom: .3vh;
                         font-size: clamp(9px, .82vw, 15px); font-weight: 800; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
                     .pj-projects { display: flex; flex-direction: column; gap: .3vh; overflow: hidden; }
-                    .pj-card { color: #fff; border-radius: 5px; padding: .3vh .5vw; line-height: 1.15; overflow: hidden;
-                        display: flex; flex-direction: row; gap: .5vw; align-items: stretch; }
+                    .pj-card { color: #fff; border-radius: 5px; padding: .25vh .45vw; line-height: 1.1; overflow: hidden;
+                        display: flex; flex-direction: row; gap: .45vw; align-items: stretch; }
                     .pj-card.done { opacity: .55; text-decoration: line-through; }
                     .pj-card .pc-main { flex: 0 0 60%; max-width: 60%; min-width: 0; }
                     .pj-card .pc-dates { flex: 0 0 40%; max-width: 40%; min-width: 0;
-                        border-left: 2px solid rgba(255,255,255,.35); padding-left: .5vw; }
-                    .pj-card .c-client { font-size: clamp(11px, 1.05vw, 20px); font-weight: 800;
+                        border-left: 2px solid rgba(255,255,255,.35); padding-left: .45vw; }
+                    .pj-card .c-client { font-size: clamp(9px, .9vw, 17px); font-weight: 800;
                         white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-                    .pj-card .c-row { font-size: clamp(9px, .82vw, 15px); font-weight: 500; opacity: .95;
+                    .pj-card .c-row { font-size: clamp(8px, .72vw, 13px); font-weight: 500; opacity: .95;
                         white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-                    .pj-card .c-date { margin-bottom: .25vh; }
-                    .pj-card .c-date .c-lbl { display: block; font-size: clamp(8px, .7vw, 13px); font-weight: 600;
-                        opacity: .8; text-transform: uppercase; letter-spacing: .3px; line-height: 1.1; }
-                    .pj-card .c-date .c-val { display: block; font-size: clamp(10px, .95vw, 17px); font-weight: 800;
-                        line-height: 1.15; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-                    .pj-card .c-mac { font-size: clamp(9px, .85vw, 16px); font-weight: 700; margin-top: .1vh;
+                    .pj-card .c-prog { margin-bottom: .3vh; }
+                    .pj-card .c-prog .c-progbar { background: rgba(255,255,255,.3); border-radius: 4px;
+                        height: .85vh; min-height: 5px; overflow: hidden; }
+                    .pj-card .c-prog .c-progfill { background: #fff; height: 100%; }
+                    .pj-card .c-prog .c-progtxt { font-size: clamp(8px, .74vw, 13px); font-weight: 800;
+                        margin-top: .1vh; white-space: nowrap; }
+                    .pj-card .c-date { margin-bottom: .2vh; }
+                    .pj-card .c-date .c-lbl { display: block; font-size: clamp(7px, .62vw, 11px); font-weight: 600;
+                        opacity: .8; text-transform: uppercase; letter-spacing: .3px; line-height: 1.05; }
+                    .pj-card .c-date .c-val { display: block; font-size: clamp(9px, .82vw, 15px); font-weight: 800;
+                        line-height: 1.1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+                    .pj-card .c-mac { font-size: clamp(8px, .74vw, 14px); font-weight: 700; margin-top: .1vh;
                         white-space: normal; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; }
+                    /* Tipos que solo muestran el cliente */
+                    .pj-card.simple { flex-direction: column; align-items: flex-start; justify-content: center; gap: .3vh; }
+                    .pj-card.simple .c-type { font-size: clamp(8px, .72vw, 13px); font-weight: 800; text-transform: uppercase;
+                        letter-spacing: .3px; background: rgba(0,0,0,.22); border-radius: 4px; padding: .1vh .5vw; }
+                    .pj-card.simple .c-client-big { font-size: clamp(11px, 1.15vw, 22px); font-weight: 800; line-height: 1.1;
+                        white-space: normal; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; }
                     .pj-overflow { font-size: clamp(10px, .9vw, 16px); font-weight: 700; color: var(--muted); padding-left: .2vw; }
 
                     /* Sidebar mini calendarios */
@@ -526,21 +538,33 @@
                                         </t>
                                         <div class="pj-projects">
                                             <t t-foreach="day['projects']" t-as="p">
-                                                <div t-attf-class="pj-card#{' done' if p['done'] else ''}" t-attf-style="background:#{p['color']}">
-                                                    <div class="pc-main">
-                                                        <div class="c-client" t-esc="p['client']"/>
-                                                        <t t-if="p['machines']"><div class="c-mac" t-esc="p['machines']"/></t>
+                                                <t t-if="p['delivery_type'] == 'project'">
+                                                    <div t-attf-class="pj-card#{' done' if p['done'] else ''}" t-attf-style="background:#{p['color']}">
+                                                        <div class="pc-main">
+                                                            <div class="c-client" t-esc="p['client']"/>
+                                                            <t t-if="p['machines']"><div class="c-mac" t-esc="p['machines']"/></t>
+                                                        </div>
+                                                        <div class="pc-dates">
+                                                            <div class="c-prog">
+                                                                <div class="c-progbar"><div class="c-progfill" t-attf-style="width:#{p['progress']}%;"/></div>
+                                                                <div class="c-progtxt"><t t-esc="p['progress']"/>% · <t t-esc="p['done_count']"/>/<t t-esc="p['total_count']"/></div>
+                                                            </div>
+                                                            <t t-if="p['order_ref']">
+                                                                <div class="c-date"><span class="c-lbl">OC / Cot.</span><span class="c-val" t-esc="p['order_ref']"/></div>
+                                                            </t>
+                                                            <t t-if="p['order_date']">
+                                                                <div class="c-date"><span class="c-lbl">Orden</span><span class="c-val" t-esc="p['order_date']"/></div>
+                                                            </t>
+                                                            <div class="c-date"><span class="c-lbl">Entrega</span><span class="c-val" t-esc="p['delivery_date']"/></div>
+                                                        </div>
                                                     </div>
-                                                    <div class="pc-dates">
-                                                        <t t-if="p['order_ref']">
-                                                            <div class="c-date"><span class="c-lbl">OC / Cot.</span><span class="c-val" t-esc="p['order_ref']"/></div>
-                                                        </t>
-                                                        <t t-if="p['order_date']">
-                                                            <div class="c-date"><span class="c-lbl">Orden</span><span class="c-val" t-esc="p['order_date']"/></div>
-                                                        </t>
-                                                        <div class="c-date"><span class="c-lbl">Entrega</span><span class="c-val" t-esc="p['delivery_date']"/></div>
+                                                </t>
+                                                <t t-else="">
+                                                    <div t-attf-class="pj-card simple#{' done' if p['done'] else ''}" t-attf-style="background:#{p['color']}">
+                                                        <div class="c-type" t-esc="p['type_label']"/>
+                                                        <div class="c-client-big" t-esc="p['client']"/>
                                                     </div>
-                                                </div>
+                                                </t>
                                             </t>
                                             <t t-if="day['overflow']">
                                                 <div class="pj-overflow">+<t t-esc="day['overflow']"/> mas</div>

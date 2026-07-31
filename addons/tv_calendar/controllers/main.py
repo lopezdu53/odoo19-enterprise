@@ -11,6 +11,9 @@ from odoo.tools import html2plaintext
 
 from ..models.tv_calendar_task import IMPORTANCE_LEVELS
 from ..models.tv_calendar_holidays import holidays_for_years
+from ..models.tv_calendar_project import DELIVERY_TYPES
+
+DELIVERY_TYPE_LABELS = dict(DELIVERY_TYPES)
 
 MONTHS_ES = [
     'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
@@ -472,12 +475,17 @@ class TvCalendarController(http.Controller):
     def _project_vals(self, prj):
         return {
             'client': prj.client or '',
+            'delivery_type': prj.delivery_type,
+            'type_label': DELIVERY_TYPE_LABELS.get(prj.delivery_type, ''),
             'order_ref': prj.order_ref or '',
             'order_date': prj.order_date.strftime('%d/%m/%Y') if prj.order_date else '',
             'delivery_date': prj.delivery_date.strftime('%d/%m/%Y') if prj.delivery_date else '',
             'machines': prj.machines or '',
             'color': prj.importance_hex(),
             'done': prj.done,
+            'progress': prj.progress,
+            'done_count': prj.task_done_count,
+            'total_count': prj.task_count,
         }
 
     def _mini_month(self, year, month, today, holidays, delivery_days):

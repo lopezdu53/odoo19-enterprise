@@ -6,6 +6,16 @@ from odoo.exceptions import ValidationError
 from .tv_calendar_task import IMPORTANCE_LEVELS, IMPORTANCE_SELECTION, PROJECT_STAGES
 
 
+DELIVERY_TYPES = [
+    ('project', 'Proyecto'),
+    ('installation', 'Instalacion y Capacitacion'),
+    ('fat', 'Pruebas FAT'),
+    ('sat', 'Pruebas SAT'),
+    ('service', 'Servicio Tecnico'),
+    ('warranty', 'Garantia'),
+]
+
+
 def _bar(pct, color):
     return Markup(
         '<div style="background:#e2e6ee;border-radius:5px;height:12px;overflow:hidden;">'
@@ -30,6 +40,10 @@ class TvCalendarProject(models.Model):
     _rec_name = 'client'
 
     client = fields.Char(string='Cliente', required=True, tracking=True)
+    delivery_type = fields.Selection(
+        DELIVERY_TYPES, string='Tipo de entrega', default='project', required=True,
+        help="'Proyecto' muestra todo (cliente, fechas, maquinas, avance). "
+             "Los demas tipos muestran solo el cliente en el TV.")
     order_ref = fields.Char(string='# Cotizacion / OC', tracking=True)
     order_date = fields.Date(string='Fecha de orden', tracking=True)
     delivery_date = fields.Date(
