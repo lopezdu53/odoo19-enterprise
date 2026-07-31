@@ -459,14 +459,18 @@
                     .pj-festivo { color: #fff; background: var(--holi); border-radius: 4px; padding: .1vh .4vw; margin-bottom: .3vh;
                         font-size: clamp(9px, .82vw, 15px); font-weight: 800; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
                     .pj-projects { display: flex; flex-direction: column; gap: .3vh; overflow: hidden; }
-                    .pj-card { color: #fff; border-radius: 5px; padding: .3vh .5vw; line-height: 1.15; overflow: hidden; }
+                    .pj-card { color: #fff; border-radius: 5px; padding: .3vh .5vw; line-height: 1.15; overflow: hidden;
+                        display: flex; flex-direction: row; gap: .5vw; align-items: stretch; }
                     .pj-card.done { opacity: .55; text-decoration: line-through; }
+                    .pj-card .pc-main { flex: 0 0 60%; max-width: 60%; min-width: 0; }
+                    .pj-card .pc-dates { flex: 0 0 40%; max-width: 40%; min-width: 0;
+                        border-left: 2px solid rgba(255,255,255,.35); padding-left: .5vw; }
                     .pj-card .c-client { font-size: clamp(11px, 1.05vw, 20px); font-weight: 800;
                         white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
                     .pj-card .c-row { font-size: clamp(9px, .82vw, 15px); font-weight: 500; opacity: .95;
                         white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
                     .pj-card .c-mac { font-size: clamp(9px, .85vw, 16px); font-weight: 700; margin-top: .1vh;
-                        white-space: normal; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; }
+                        white-space: normal; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; }
                     .pj-overflow { font-size: clamp(10px, .9vw, 16px); font-weight: 700; color: var(--muted); padding-left: .2vw; }
 
                     /* Sidebar mini calendarios */
@@ -518,11 +522,15 @@
                                         <div class="pj-projects">
                                             <t t-foreach="day['projects']" t-as="p">
                                                 <div t-attf-class="pj-card#{' done' if p['done'] else ''}" t-attf-style="background:#{p['color']}">
-                                                    <div class="c-client" t-esc="p['client']"/>
-                                                    <t t-if="p['order_ref']"><div class="c-row">OC/Cot: <t t-esc="p['order_ref']"/></div></t>
-                                                    <t t-if="p['order_date']"><div class="c-row">Orden: <t t-esc="p['order_date']"/></div></t>
-                                                    <div class="c-row">Entrega: <t t-esc="p['delivery_date']"/></div>
-                                                    <t t-if="p['machines']"><div class="c-mac" t-esc="p['machines']"/></t>
+                                                    <div class="pc-main">
+                                                        <div class="c-client" t-esc="p['client']"/>
+                                                        <t t-if="p['machines']"><div class="c-mac" t-esc="p['machines']"/></t>
+                                                    </div>
+                                                    <div class="pc-dates">
+                                                        <t t-if="p['order_ref']"><div class="c-row">OC/Cot: <t t-esc="p['order_ref']"/></div></t>
+                                                        <t t-if="p['order_date']"><div class="c-row">Orden: <t t-esc="p['order_date']"/></div></t>
+                                                        <div class="c-row">Entrega: <t t-esc="p['delivery_date']"/></div>
+                                                    </div>
                                                 </div>
                                             </t>
                                             <t t-if="day['overflow']">
