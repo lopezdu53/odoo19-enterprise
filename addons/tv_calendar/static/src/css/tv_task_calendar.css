@@ -1,0 +1,8 @@
+/* Festivos de Colombia marcados en el calendario de tareas del backend */
+.o_calendar_widget .o_tv_holiday {
+    background-color: rgba(198, 40, 40, 0.14) !important;
+}
+.o_calendar_widget .o_tv_holiday .fc-daygrid-day-number {
+    color: #c62828;
+    font-weight: 700;
+}

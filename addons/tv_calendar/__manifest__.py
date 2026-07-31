@@ -35,6 +35,12 @@ Caracteristicas
         'templates/kiosk_templates.xml',
         'data/demo_data.xml',
     ],
+    'assets': {
+        'web.assets_backend': [
+            'tv_calendar/static/src/js/tv_task_calendar.js',
+            'tv_calendar/static/src/css/tv_task_calendar.css',
+        ],
+    },
     'application': True,
     'installable': True,
     'post_init_hook': 'post_init_hook',

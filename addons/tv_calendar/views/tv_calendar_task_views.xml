@@ -43,15 +43,12 @@
                             <field name="date_end"/>
                         </group>
                     </group>
-                    <group>
-                        <group string="Descripcion">
-                            <field name="description" nolabel="1" widget="html"
-                                   options="{'height': 260}"
-                                   placeholder="Detalles, instrucciones, imagenes..."/>
-                        </group>
-                        <group string="Imagen de referencia (Mecanizado)">
-                            <field name="reference_image" widget="image" nolabel="1"/>
-                        </group>
+                    <group string="Descripcion">
+                        <field name="description" nolabel="1" widget="html"
+                               placeholder="Detalles, instrucciones, imagenes..."/>
+                    </group>
+                    <group string="Imagen de referencia (Mecanizado)">
+                        <field name="reference_image" widget="image" nolabel="1"/>
                     </group>
                 </sheet>
                 <chatter/>
@@ -64,7 +61,9 @@
         <field name="model">tv.calendar.task</field>
         <field name="arch" type="xml">
             <calendar string="Tareas" date_start="date" date_stop="date_end"
-                      color="importance" mode="month">
+                      color="importance" mode="month"
+                      js_class="tv_task_calendar"
+                      quick_create="0" event_open_popup="1">
                 <field name="name"/>
                 <field name="board_ids"/>
                 <field name="importance" filters="1"/>
