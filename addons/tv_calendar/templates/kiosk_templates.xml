@@ -201,6 +201,25 @@
                     .req-modal #req-cancel { background: #e0e0e0; color: #111; }
                     .req-modal #req-send { background: #2e7d32; color: #fff; }
                     .req-modal #req-msg { font-size: clamp(14px, 1.5vw, 26px); font-weight: 700; color: #1565c0; min-height: 1.4em; }
+
+                    /* Electricos: seguimiento de la tarea */
+                    .et-panel { margin-top: .6vh; display: flex; flex-direction: column; gap: .5vh; }
+                    .et-controls { display: flex; align-items: center; gap: .5vw; flex-wrap: wrap; }
+                    .task-btn { font-size: clamp(11px, 1.15vw, 22px); font-weight: 800; padding: .5vh .9vw;
+                        border: 0; border-radius: 8px; cursor: pointer; color: #fff; }
+                    .task-btn.tb-start { background: #2e7d32; }
+                    .task-btn.tb-pause { background: #ef6c00; }
+                    .task-btn.tb-done { background: #6a1b9a; }
+                    .task-btn:disabled { opacity: .38; cursor: default; }
+                    .et-timer { margin-left: auto; font-size: clamp(14px, 1.5vw, 28px); font-weight: 800;
+                        font-variant-numeric: tabular-nums; background: rgba(0,0,0,.28); padding: .3vh .8vw; border-radius: 8px; }
+                    .et-stamps { display: flex; flex-wrap: wrap; gap: .2vh 1.2vw; font-size: clamp(10px, 1vw, 18px); opacity: .92; }
+                    .et-stamps b { font-weight: 800; }
+                    .et-comps { margin-top: .2vh; background: rgba(255,255,255,.14); border-radius: 8px; padding: .5vh .8vw; }
+                    .et-comps-h { font-size: clamp(11px, 1.1vw, 20px); font-weight: 800; opacity: .85; margin-bottom: .2vh; }
+                    .et-comp { display: flex; justify-content: space-between; gap: 1vw; font-size: clamp(11px, 1.1vw, 20px); }
+                    .et-comp-d { font-weight: 700; opacity: .82; }
+                    .et-comp-d.ok { color: #a5d6a7; opacity: 1; }
                 </style>
             </head>
             <body t-attf-class="theme-#{theme}">
@@ -235,7 +254,40 @@
                                                 <div class="bt-desc" t-out="task['description_html']"/>
                                             </t>
                                             <t t-if="interactive">
-                                                <button class="req-btn" t-att-data-task="task['id']">+ Solicitar componente</button>
+                                                <div class="et-panel">
+                                                    <div class="et-controls" t-att-data-state="task['work_state']">
+                                                        <button class="task-btn tb-start" t-att-data-task="task['id']" data-action="start">&#9654; Iniciar</button>
+                                                        <button class="task-btn tb-pause" t-att-data-task="task['id']" data-action="pause">&#10073;&#10073; Pausar</button>
+                                                        <button class="task-btn tb-done" t-att-data-task="task['id']" data-action="done">&#10004; Completar</button>
+                                                        <button class="req-btn" t-att-data-task="task['id']">+ Solicitar componente</button>
+                                                        <span class="et-timer" t-attf-id="timer-#{task['id']}"
+                                                              t-att-data-elapsed="task['work_elapsed']"
+                                                              t-att-data-running="task['work_running_ts']">00:00:00</span>
+                                                    </div>
+                                                    <div class="et-stamps">
+                                                        <span>Asignada: <b t-att-data-ts="task['created_ts']">&#8212;</b></span>
+                                                        <span>Iniciada: <b t-attf-id="st-start-#{task['id']}" t-att-data-ts="task['work_started_ts']">&#8212;</b></span>
+                                                        <span>Pausada: <b t-attf-id="st-pause-#{task['id']}" t-att-data-ts="task['work_paused_ts']">&#8212;</b></span>
+                                                        <span>Reactivada: <b t-attf-id="st-react-#{task['id']}" t-att-data-ts="task['work_reactivated_ts']">&#8212;</b></span>
+                                                        <span>Completada: <b t-attf-id="st-done-#{task['id']}" t-att-data-ts="task['work_completed_ts']">&#8212;</b></span>
+                                                    </div>
+                                                    <t t-if="task['components']">
+                                                        <div class="et-comps">
+                                                            <div class="et-comps-h">Componentes solicitados</div>
+                                                            <t t-foreach="task['components']" t-as="c">
+                                                                <div class="et-comp">
+                                                                    <span class="et-comp-n" t-esc="c['name']"/>
+                                                                    <t t-if="c['delivered_ts']">
+                                                                        <span class="et-comp-d ok">Entregado <b t-att-data-ts="c['delivered_ts']">&#8212;</b></span>
+                                                                    </t>
+                                                                    <t t-else="">
+                                                                        <span class="et-comp-d">Pendiente</span>
+                                                                    </t>
+                                                                </div>
+                                                            </t>
+                                                        </div>
+                                                    </t>
+                                                </div>
                                             </t>
                                         </div>
                                         <t t-if="show_images and task['image']">

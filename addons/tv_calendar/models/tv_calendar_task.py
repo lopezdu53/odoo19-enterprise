@@ -72,6 +72,52 @@ class TvCalendarTask(models.Model):
         help="Se muestra a la derecha de la tarea en la plantilla Mecanizado.")
     done = fields.Boolean(string='Completada', default=False, tracking=True)
 
+    # --- Seguimiento de ejecucion (plantilla Electricos) ---
+    work_state = fields.Selection(
+        [('assigned', 'Asignada'), ('in_progress', 'En progreso'),
+         ('paused', 'Pausada'), ('done', 'Completada')],
+        string='Estado de ejecucion', default='assigned', tracking=True)
+    work_started_datetime = fields.Datetime(string='Iniciada')
+    work_paused_datetime = fields.Datetime(string='Pausada')
+    work_reactivated_datetime = fields.Datetime(string='Reactivada')
+    work_completed_datetime = fields.Datetime(string='Completada el')
+    work_elapsed_seconds = fields.Float(
+        string='Tiempo trabajado (s)', default=0.0,
+        help="Segundos acumulados de trabajo (sin contar las pausas).")
+    work_running_since = fields.Datetime(
+        string='En marcha desde',
+        help="Momento en que se reanudo. Vacio si esta pausada o terminada.")
+
+    def _work_accumulate(self, now):
+        """Suma al acumulado el tiempo transcurrido desde la ultima marcha."""
+        self.ensure_one()
+        if self.work_running_since:
+            delta = (now - self.work_running_since).total_seconds()
+            self.work_elapsed_seconds = (self.work_elapsed_seconds or 0.0) + max(0.0, delta)
+        self.work_running_since = False
+
+    def apply_work_action(self, action):
+        """Aplica una accion de ejecucion (iniciar / pausar / completar)."""
+        self.ensure_one()
+        now = fields.Datetime.now()
+        if action == 'start' and self.work_state in ('assigned', 'paused'):
+            if self.work_state == 'paused':
+                self.work_reactivated_datetime = now
+            elif not self.work_started_datetime:
+                self.work_started_datetime = now
+            self.work_state = 'in_progress'
+            self.work_running_since = now
+        elif action == 'pause' and self.work_state == 'in_progress':
+            self._work_accumulate(now)
+            self.work_state = 'paused'
+            self.work_paused_datetime = now
+        elif action == 'done' and self.work_state in ('in_progress', 'paused'):
+            self._work_accumulate(now)
+            self.work_state = 'done'
+            self.work_completed_datetime = now
+            self.done = True
+        return self
+
     @api.depends('importance')
     def _compute_importance_meta(self):
         for task in self:

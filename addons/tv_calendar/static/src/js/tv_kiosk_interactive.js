@@ -101,7 +101,73 @@
             });
         }
 
-        // 3) Botones de estado (plantilla Pedidos de componentes).
+        // 3b) Cronometro + botones de tarea (plantilla Electricos).
+        function fmtDur(s) {
+            s = Math.max(0, Math.floor(s));
+            var h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60), sec = s % 60;
+            return pad(h) + ":" + pad(m) + ":" + pad(sec);
+        }
+        function renderTimers() {
+            Array.prototype.forEach.call(document.querySelectorAll(".et-timer"), function (el) {
+                var base = parseInt(el.getAttribute("data-elapsed"), 10) || 0;
+                var run = parseInt(el.getAttribute("data-running"), 10) || 0;
+                var total = run ? (base + (Date.now() / 1000 - run)) : base;
+                el.textContent = fmtDur(total);
+            });
+        }
+        function setTaskButtons(ctrl, state) {
+            ctrl.setAttribute("data-state", state);
+            var start = ctrl.querySelector(".tb-start");
+            var pause = ctrl.querySelector(".tb-pause");
+            var done = ctrl.querySelector(".tb-done");
+            if (start) {
+                start.disabled = (state === "in_progress" || state === "done");
+                start.textContent = (state === "paused" ? "▶ Reanudar" : "▶ Iniciar");
+            }
+            if (pause) { pause.disabled = (state !== "in_progress"); }
+            if (done) { done.disabled = (state === "assigned" || state === "done"); }
+        }
+        function setStamp(id, ts) {
+            var el = document.getElementById(id);
+            if (el && ts) { el.textContent = fmtTs(ts); }
+        }
+        if (document.querySelector(".et-timer")) {
+            renderTimers();
+            setInterval(renderTimers, 1000);
+        }
+        Array.prototype.forEach.call(document.querySelectorAll(".et-controls"), function (ctrl) {
+            setTaskButtons(ctrl, ctrl.getAttribute("data-state") || "assigned");
+        });
+        if (token) {
+            Array.prototype.forEach.call(document.querySelectorAll(".task-btn"), function (b) {
+                b.addEventListener("click", function () {
+                    if (b.disabled) { return; }
+                    var id = b.getAttribute("data-task");
+                    var action = b.getAttribute("data-action");
+                    var ctrl = b.parentNode;
+                    b.disabled = true;
+                    fetch("/tv/task/action/" + token + "/" + id + "/" + action, { method: "POST" })
+                        .then(function (r) { return r.json(); })
+                        .then(function (d) {
+                            if (!d.ok) { setTaskButtons(ctrl, ctrl.getAttribute("data-state")); return; }
+                            var timer = document.getElementById("timer-" + id);
+                            if (timer) {
+                                timer.setAttribute("data-elapsed", d.elapsed);
+                                timer.setAttribute("data-running", d.running_ts || 0);
+                            }
+                            setStamp("st-start-" + id, d.started_ts);
+                            setStamp("st-pause-" + id, d.paused_ts);
+                            setStamp("st-react-" + id, d.reactivated_ts);
+                            setStamp("st-done-" + id, d.completed_ts);
+                            setTaskButtons(ctrl, d.state);
+                            renderTimers();
+                        })
+                        .catch(function () { setTaskButtons(ctrl, ctrl.getAttribute("data-state")); });
+                });
+            });
+        }
+
+        // 4) Botones de estado (plantilla Pedidos de componentes).
         if (token) {
             Array.prototype.forEach.call(document.querySelectorAll(".comp-btn"), function (b) {
                 b.addEventListener("click", function () {

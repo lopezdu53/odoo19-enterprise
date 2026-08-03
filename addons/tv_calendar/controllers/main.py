@@ -90,7 +90,8 @@ class TvCalendarController(http.Controller):
                     'activity': s.activity or '',
                     'color': s.slot_color(),
                 } for s in board.time_slot_ids],
-                'today_tasks': self._operator_today_tasks(board, today, with_image=is_mecan),
+                'today_tasks': self._operator_today_tasks(
+                    board, today, with_image=is_mecan, interactive=is_electric),
                 'today_label': ('%s de %s de %s'
                                 % (today.day, MONTHS_ES[today.month - 1], today.year)),
             })
@@ -394,7 +395,7 @@ class TvCalendarController(http.Controller):
     # ------------------------------------------------------------------
     # Operario: tareas activas hoy
     # ------------------------------------------------------------------
-    def _operator_today_tasks(self, board, today, with_image=False):
+    def _operator_today_tasks(self, board, today, with_image=False, interactive=False):
         source = board.task_board_id or board
         domain = [
             ('board_ids', 'in', source.id),
@@ -406,7 +407,32 @@ class TvCalendarController(http.Controller):
         # Orden de ingreso (cola): la primera creada arriba.
         tasks = request.env['tv.calendar.task'].sudo().search(domain)
         tasks = tasks.sorted(key=lambda t: t.id)
-        return [self._task_vals(t, with_image=with_image) for t in tasks]
+        result = []
+        for t in tasks:
+            vals = self._task_vals(t, with_image=with_image)
+            if interactive:
+                vals.update(self._task_work_vals(t, board))
+            result.append(vals)
+        return result
+
+    def _task_work_vals(self, task, board):
+        """Estado de ejecucion + componentes solicitados de una tarea."""
+        requests = request.env['tv.calendar.component.request'].sudo().search(
+            [('task_id', '=', task.id), ('board_id', '=', board.id)], order='create_date asc')
+        return {
+            'work_state': task.work_state,
+            'work_started_ts': self._dt_ts(task.work_started_datetime),
+            'work_paused_ts': self._dt_ts(task.work_paused_datetime),
+            'work_reactivated_ts': self._dt_ts(task.work_reactivated_datetime),
+            'work_completed_ts': self._dt_ts(task.work_completed_datetime),
+            'work_elapsed': int(task.work_elapsed_seconds or 0),
+            'work_running_ts': self._dt_ts(task.work_running_since),
+            'components': [{
+                'name': r.name,
+                'state': r.state,
+                'delivered_ts': self._dt_ts(r.delivered_datetime),
+            } for r in requests],
+        }
 
     # ------------------------------------------------------------------
     # Proyectos por entregar
@@ -691,6 +717,29 @@ class TvCalendarController(http.Controller):
             vals['delivered_datetime'] = now
         req.write(vals)
         return self._json({'ok': True, 'ts': int(now.replace(tzinfo=timezone.utc).timestamp())})
+
+    @http.route('/tv/task/action/<string:access_token>/<int:task_id>/<string:action>',
+                type='http', auth='public', csrf=False, methods=['POST'], sitemap=False)
+    def task_action(self, access_token, task_id, action, **kw):
+        board = self._board_by_token(access_token)
+        if not board:
+            return self._json({'error': 'not_found'})
+        if action not in ('start', 'pause', 'done'):
+            return self._json({'error': 'bad_action'})
+        task = request.env['tv.calendar.task'].sudo().browse(task_id)
+        if not task.exists():
+            return self._json({'error': 'no_task'})
+        task.apply_work_action(action)
+        return self._json({
+            'ok': True,
+            'state': task.work_state,
+            'started_ts': self._dt_ts(task.work_started_datetime),
+            'paused_ts': self._dt_ts(task.work_paused_datetime),
+            'reactivated_ts': self._dt_ts(task.work_reactivated_datetime),
+            'completed_ts': self._dt_ts(task.work_completed_datetime),
+            'elapsed': int(task.work_elapsed_seconds or 0),
+            'running_ts': self._dt_ts(task.work_running_since),
+        })
 
     # ------------------------------------------------------------------
     # Publicidad

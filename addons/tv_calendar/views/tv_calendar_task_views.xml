@@ -54,6 +54,14 @@
                     <group string="Imagen de referencia (Mecanizado)">
                         <field name="reference_image" widget="image" nolabel="1"/>
                     </group>
+                    <group string="Ejecucion (Electricos)" col="4">
+                        <field name="work_state"/>
+                        <field name="work_elapsed_seconds"/>
+                        <field name="work_started_datetime"/>
+                        <field name="work_completed_datetime"/>
+                        <field name="work_paused_datetime"/>
+                        <field name="work_reactivated_datetime"/>
+                    </group>
                 </sheet>
                 <chatter/>
             </form>
