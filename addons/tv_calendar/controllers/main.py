@@ -1,4 +1,5 @@
 import calendar
+import json
 import re
 import urllib.parse
 from datetime import date, timedelta, timezone
@@ -72,11 +73,14 @@ class TvCalendarController(http.Controller):
             common.update(self._projects_values(board, today))
             return self._render(board, 'tv_calendar.kiosk_projects', common)
 
-        if board.template_type in ('operator', 'mecanizado'):
-            is_mecan = board.template_type == 'mecanizado'
+        if board.template_type in ('operator', 'mecanizado', 'electric'):
+            is_electric = board.template_type == 'electric'
+            is_mecan = board.template_type == 'mecanizado' or is_electric
             common.update({
                 'is_mecan': is_mecan,
                 'show_images': is_mecan,
+                'interactive': is_electric,
+                'access_token': board.access_token,
                 'operator_name': board.operator_display or '',
                 'epp_message': board.epp_message or '',
                 'epp_message2': board.epp_message2 or '',
@@ -91,6 +95,10 @@ class TvCalendarController(http.Controller):
                                 % (today.day, MONTHS_ES[today.month - 1], today.year)),
             })
             return self._render(board, 'tv_calendar.kiosk_page', common)
+
+        if board.template_type == 'component_orders':
+            common.update(self._component_orders_values(board, today))
+            return self._render(board, 'tv_calendar.kiosk_component_orders', common)
 
         # --- Cronograma principal (normal o dia extendido) ---
         if board.template_type == 'extended':
@@ -357,6 +365,7 @@ class TvCalendarController(http.Controller):
         if with_image and task.reference_image:
             image = TvCalendarController._image_data_uri(task.reference_image)
         return {
+            'id': task.id,
             'name': task.name,
             'description_html': desc_html,
             'description_text': html2plaintext(desc_html) if desc_html else '',
@@ -541,6 +550,147 @@ class TvCalendarController(http.Controller):
     def _add_months(year, month, n):
         index = (year * 12 + (month - 1)) + n
         return index // 12, (index % 12) + 1
+
+    # ------------------------------------------------------------------
+    # Pedidos de componentes (interactivo)
+    # ------------------------------------------------------------------
+    def _component_orders_values(self, board, today):
+        source = board.component_source_board_id or board
+        requests = request.env['tv.calendar.component.request'].sudo().search([
+            ('board_id', '=', source.id),
+            ('state', 'in', ('new', 'requested')),
+        ], order='create_date asc')
+        return {
+            'access_token': board.access_token,
+            'operator_name': board.operator_display or '',
+            'epp_message': board.epp_message or '',
+            'epp_message2': board.epp_message2 or '',
+            'notice_message': board.notice_message or '',
+            'slots': [{
+                'time': s.time_label or '',
+                'activity': s.activity or '',
+                'color': s.slot_color(),
+            } for s in board.time_slot_ids],
+            'today_label': ('%s de %s de %s'
+                            % (today.day, MONTHS_ES[today.month - 1], today.year)),
+            'requests': [self._component_vals(r) for r in requests],
+        }
+
+    def _component_vals(self, r):
+        image = ''
+        if r.product_id and r.product_id.image_512:
+            image = self._image_data_uri(r.product_id.image_512)
+        return {
+            'id': r.id,
+            'name': r.name,
+            'category': r.category_id.display_name or '',
+            'description': r.description or '',
+            'value': '{:,.0f}'.format(r.value or 0.0),
+            'image': image,
+            'state': r.state,
+            'requested_ts': self._dt_ts(r.requested_datetime),
+            'delivered_ts': self._dt_ts(r.delivered_datetime),
+        }
+
+    @staticmethod
+    def _dt_ts(dt):
+        return int(dt.replace(tzinfo=timezone.utc).timestamp()) if dt else 0
+
+    # ------------------------------------------------------------------
+    # Endpoints interactivos (JSON) para el TV de electricos / pedidos
+    # ------------------------------------------------------------------
+    @staticmethod
+    def _board_by_token(token):
+        return request.env['tv.calendar.board'].sudo().search(
+            [('access_token', '=', token)], limit=1)
+
+    @staticmethod
+    def _json(data):
+        return request.make_response(json.dumps(data), headers=[
+            ('Content-Type', 'application/json; charset=utf-8'),
+            ('Cache-Control', 'no-store'),
+        ])
+
+    @http.route('/tv/component/categories/<string:access_token>', type='http',
+                auth='public', csrf=False, methods=['GET'], sitemap=False)
+    def component_categories(self, access_token, **kw):
+        board = self._board_by_token(access_token)
+        if not board:
+            return self._json({'error': 'not_found'})
+        return self._json({'categories': [
+            {'id': c.id, 'name': c.display_name} for c in board.category_ids
+        ]})
+
+    @http.route('/tv/component/products/<string:access_token>/<int:category_id>',
+                type='http', auth='public', csrf=False, methods=['GET'], sitemap=False)
+    def component_products(self, access_token, category_id, **kw):
+        board = self._board_by_token(access_token)
+        if not board:
+            return self._json({'error': 'not_found'})
+        if category_id not in board.category_ids.ids:
+            return self._json({'error': 'forbidden'})
+        products = request.env['product.product'].sudo().search(
+            [('categ_id', 'child_of', category_id)], limit=300)
+        return self._json({'products': [
+            {'id': p.id, 'name': p.display_name, 'price': '{:,.0f}'.format(p.list_price or 0.0)}
+            for p in products
+        ]})
+
+    @http.route('/tv/component/request/<string:access_token>', type='http',
+                auth='public', csrf=False, methods=['POST'], sitemap=False)
+    def component_request(self, access_token, product_id=None, task_id=None,
+                          title=None, description=None, **kw):
+        board = self._board_by_token(access_token)
+        if not board:
+            return self._json({'error': 'not_found'})
+        try:
+            product = request.env['product.product'].sudo().browse(int(product_id))
+        except (TypeError, ValueError):
+            return self._json({'error': 'no_product'})
+        if not product.exists():
+            return self._json({'error': 'no_product'})
+        # El producto debe pertenecer a una categoria permitida (o descendiente).
+        allowed_ids = set(board.category_ids.ids)
+        chain = {int(x) for x in (product.categ_id.parent_path or '').split('/') if x}
+        if not (allowed_ids & chain):
+            return self._json({'error': 'forbidden'})
+        try:
+            task = request.env['tv.calendar.task'].sudo().browse(int(task_id)) if task_id else None
+            task_ref = task.id if task and task.exists() else False
+        except (TypeError, ValueError):
+            task_ref = False
+        request.env['tv.calendar.component.request'].sudo().create({
+            'name': (title or product.display_name)[:200],
+            'board_id': board.id,
+            'task_id': task_ref,
+            'product_id': product.id,
+            'category_id': product.categ_id.id,
+            'description': description or '',
+            'value': product.list_price,
+            'operator': board.operator_display or '',
+            'state': 'new',
+        })
+        return self._json({'ok': True})
+
+    @http.route('/tv/component/state/<string:access_token>/<int:req_id>/<string:state>',
+                type='http', auth='public', csrf=False, methods=['POST'], sitemap=False)
+    def component_state(self, access_token, req_id, state, **kw):
+        board = self._board_by_token(access_token)
+        if not board:
+            return self._json({'error': 'not_found'})
+        if state not in ('requested', 'delivered'):
+            return self._json({'error': 'bad_state'})
+        req = request.env['tv.calendar.component.request'].sudo().browse(req_id)
+        if not req.exists():
+            return self._json({'error': 'no_req'})
+        now = fields.Datetime.now()
+        vals = {'state': state}
+        if state == 'requested':
+            vals['requested_datetime'] = now
+        else:
+            vals['delivered_datetime'] = now
+        req.write(vals)
+        return self._json({'ok': True, 'ts': int(now.replace(tzinfo=timezone.utc).timestamp())})
 
     # ------------------------------------------------------------------
     # Publicidad

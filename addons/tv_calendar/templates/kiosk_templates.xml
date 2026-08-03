@@ -183,11 +183,29 @@
                     .op-mecan .s-act.pill { padding: .2vh .5vw; }
                     .op-mecan .op-notice { flex: 1 1 auto; max-height: none; }
                     .op-mecan .op-notice .n-body { font-size: clamp(14px, 1.5vw, 28px); }
+
+                    /* Electricos: boton solicitar + modal */
+                    .req-btn { margin-top: .5vh; background: rgba(255,255,255,.92); color: #111; border: 0;
+                        border-radius: 8px; font-weight: 800; font-size: clamp(12px, 1.25vw, 24px);
+                        padding: .6vh 1vw; cursor: pointer; align-self: flex-start; }
+                    .req-modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.6); z-index: 999;
+                        align-items: center; justify-content: center; }
+                    .req-modal .req-box { background: #fff; color: #111; border-radius: 14px; padding: 3vh 3vw;
+                        width: min(80vw, 720px); display: flex; flex-direction: column; gap: 1.4vh; }
+                    .req-modal .req-title { font-size: clamp(20px, 2.4vw, 40px); font-weight: 800; }
+                    .req-modal label { font-size: clamp(14px, 1.5vw, 26px); font-weight: 700; }
+                    .req-modal select { font-size: clamp(16px, 1.8vw, 30px); padding: 1.2vh 1vw; border-radius: 8px; border: 2px solid #bbb; }
+                    .req-modal .req-actions { display: flex; gap: 1vw; justify-content: flex-end; margin-top: 1vh; }
+                    .req-modal .req-actions button { font-size: clamp(16px, 1.8vw, 30px); font-weight: 800;
+                        padding: 1.2vh 2vw; border-radius: 10px; border: 0; cursor: pointer; }
+                    .req-modal #req-cancel { background: #e0e0e0; color: #111; }
+                    .req-modal #req-send { background: #2e7d32; color: #fff; }
+                    .req-modal #req-msg { font-size: clamp(14px, 1.5vw, 26px); font-weight: 700; color: #1565c0; min-height: 1.4em; }
                 </style>
             </head>
             <body t-attf-class="theme-#{theme}">
-                <t t-if="template_type in ('operator', 'mecanizado')">
-                    <!-- ================= OPERARIO / MECANIZADO ================= -->
+                <t t-if="template_type in ('operator', 'mecanizado', 'electric')">
+                    <!-- ============ OPERARIO / MECANIZADO / ELECTRICOS ============ -->
                     <header class="tvc-header">
                         <div class="tvc-title">
                             <span class="tvc-month" t-esc="month_name"/>
@@ -215,6 +233,9 @@
                                             <div class="bt-name" t-esc="task['name']"/>
                                             <t t-if="task['description_text']">
                                                 <div class="bt-desc" t-out="task['description_html']"/>
+                                            </t>
+                                            <t t-if="interactive">
+                                                <button class="req-btn" t-att-data-task="task['id']">+ Solicitar componente</button>
                                             </t>
                                         </div>
                                         <t t-if="show_images and task['image']">
@@ -271,6 +292,24 @@
                             </div>
                         </div>
                     </div>
+                    <t t-if="interactive">
+                        <span id="tvc-data" t-att-data-token="access_token" style="display:none"/>
+                        <div id="req-modal" class="req-modal">
+                            <div class="req-box">
+                                <div class="req-title">Solicitar componente</div>
+                                <label>Categoria</label>
+                                <select id="req-cat"/>
+                                <label>Producto</label>
+                                <select id="req-prod"/>
+                                <div id="req-msg"/>
+                                <div class="req-actions">
+                                    <button id="req-cancel">Cancelar</button>
+                                    <button id="req-send">Pedir</button>
+                                </div>
+                            </div>
+                        </div>
+                        <script type="text/javascript" src="/tv_calendar/static/src/js/tv_kiosk_interactive.js"/>
+                    </t>
                 </t>
                 <t t-else="">
                     <!-- ======================= CRONOGRAMA ======================= -->
@@ -635,6 +674,163 @@
                         tick(); setInterval(tick, 15000);
                     })();
                 </script>
+            </body>
+        </html>
+    </template>
+
+    <!-- ================================================================ -->
+    <!-- Plantilla Pedidos de Componentes (interactiva)                   -->
+    <!-- ================================================================ -->
+    <template id="kiosk_component_orders" name="TV Component Orders">
+        <html t-att-lang="'es'">
+            <head>
+                <meta charset="utf-8"/>
+                <meta name="viewport" content="width=device-width, initial-scale=1"/>
+                <t t-if="refresh_interval and refresh_interval &gt; 0">
+                    <meta http-equiv="refresh" t-att-content="refresh_interval"/>
+                </t>
+                <title t-esc="board.name"/>
+                <style>
+                    :root { --bg:#eef1f5; --panel:#fff; --ink:#1a2233; --muted:#7a8699; --grid-line:#d5dbe4;
+                        --header-bg:#0b1f3a; --accent:#0b57d0; }
+                    body.theme-dark { --bg:#0c1220; --panel:#131c2e; --ink:#eef2f8; --muted:#93a1b8; --grid-line:#26324a;
+                        --header-bg:#050b16; --accent:#4f8cff; }
+                    * { box-sizing:border-box; margin:0; padding:0; }
+                    html, body { height:100%; }
+                    body { background:var(--bg); color:var(--ink); height:100vh; display:flex; flex-direction:column;
+                        overflow:hidden; font-family:"Segoe UI",Roboto,Helvetica,Arial,sans-serif; -webkit-font-smoothing:antialiased; }
+                    header.co-header { background:var(--header-bg); color:#fff; display:flex; align-items:center;
+                        justify-content:space-between; padding:1.2vh 2vw; flex:0 0 auto; gap:1vw; }
+                    .co-title { display:flex; align-items:baseline; gap:1.2vw; flex-wrap:wrap; }
+                    .co-title .t1 { font-size:clamp(20px,2.4vw,44px); font-weight:800; }
+                    .co-title .t2 { font-size:clamp(13px,1.3vw,22px); opacity:.8; }
+                    .co-chip { background:var(--accent); color:#fff; font-weight:800; padding:.5vh 1.1vw; border-radius:999px;
+                        font-size:clamp(14px,1.5vw,28px); white-space:nowrap; }
+                    .co-clock { font-size:clamp(18px,2vw,40px); font-weight:800; white-space:nowrap; font-variant-numeric:tabular-nums; }
+
+                    .co-main { flex:1 1 auto; display:flex; min-height:0; gap:6px; padding:6px; }
+                    .co-primary { flex:7 1 0; min-width:0; display:flex; flex-direction:column; background:var(--panel);
+                        border:1px solid var(--grid-line); border-radius:10px; overflow:hidden; }
+                    .co-caption { background:var(--accent); color:#fff; padding:.9vh 1.4vw; flex:0 0 auto;
+                        font-size:clamp(16px,1.9vw,34px); font-weight:800; letter-spacing:.5px; }
+                    .co-list { flex:1 1 auto; display:flex; flex-direction:column; gap:1vh; padding:1.2vh 1.2vw; overflow:auto; }
+                    .co-card { background:var(--bg); border:1px solid var(--grid-line); border-radius:12px; padding:1vh 1vw;
+                        display:flex; flex-direction:row; gap:1vw; align-items:stretch; }
+                    .co-img { flex:0 0 16%; display:flex; align-items:center; justify-content:center; }
+                    .co-img img { max-width:100%; max-height:16vh; border-radius:8px; object-fit:contain; background:#fff; }
+                    .co-info { flex:1 1 0; min-width:0; display:flex; flex-direction:column; gap:.2vh; }
+                    .co-info .co-t { font-size:clamp(15px,1.7vw,32px); font-weight:800; }
+                    .co-info .co-cat { font-size:clamp(12px,1.3vw,24px); font-weight:700; color:var(--accent); }
+                    .co-info .co-desc { font-size:clamp(12px,1.25vw,22px); }
+                    .co-info .co-val { font-size:clamp(14px,1.5vw,28px); font-weight:800; }
+                    .co-act { flex:0 0 27%; display:flex; flex-direction:column; gap:.5vh; justify-content:center; }
+                    .co-act .row { display:flex; align-items:center; gap:.6vw; }
+                    .comp-btn { flex:1 1 auto; font-size:clamp(11px,1.2vw,22px); font-weight:800; padding:.8vh .8vw;
+                        border:0; border-radius:8px; cursor:pointer; color:#fff; }
+                    .comp-btn.b-req { background:#ef6c00; }
+                    .comp-btn.b-del { background:#2e7d32; }
+                    .comp-btn.done { opacity:.45; }
+                    .comp-time { flex:0 0 34%; font-size:clamp(10px,1vw,18px); font-weight:700; min-height:1.1em; text-align:right; }
+                    .co-empty { color:var(--muted); padding:4vh 1.5vw; text-align:center; font-size:clamp(18px,2vw,38px); }
+
+                    .co-side { flex:3 1 0; min-width:0; display:flex; flex-direction:column; gap:6px; }
+                    .co-epp { background:#d32f2f; color:#fff; border-radius:10px; padding:1vh 1vw; flex:0 0 auto; text-align:center;
+                        font-size:clamp(14px,1.5vw,28px); font-weight:800; }
+                    .co-sched { background:var(--panel); border:1px solid var(--grid-line); border-radius:10px; flex:1 1 0;
+                        display:flex; flex-direction:column; overflow:hidden; }
+                    .co-sched .s-cap { background:var(--header-bg); color:#fff; padding:.6vh 1vw; font-size:clamp(12px,1.3vw,22px); font-weight:800; }
+                    .co-sched .s-rows { flex:1 1 auto; display:flex; flex-direction:column; min-height:0; }
+                    .co-sched .s-row { flex:1 1 0; display:flex; align-items:center; gap:.6vw; padding:0 .8vw; border-bottom:1px solid var(--grid-line); }
+                    .co-sched .s-row:last-child { border-bottom:0; }
+                    .co-sched .s-time { flex:0 0 34%; font-size:clamp(11px,1.1vw,20px); font-weight:800; color:var(--accent); }
+                    .co-sched .s-act { flex:1 1 auto; font-size:clamp(10px,1vw,18px); font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+                    .co-sched .s-act.pill { color:#fff; border-radius:6px; padding:.2vh .5vw; }
+                    .co-notice { background:var(--panel); border:1px solid var(--grid-line); border-radius:10px; flex:0 0 auto;
+                        max-height:26vh; display:flex; flex-direction:column; overflow:hidden; }
+                    .co-notice .n-title { background:#f9a825; color:#1a2233; padding:.6vh 1vw; font-size:clamp(12px,1.3vw,22px); font-weight:800; }
+                    .co-notice .n-body { padding:.8vh 1vw; font-size:clamp(12px,1.2vw,22px); font-weight:600; white-space:pre-wrap; overflow:auto; }
+                </style>
+            </head>
+            <body t-attf-class="theme-#{theme}">
+                <span id="tvc-data" t-att-data-token="access_token" style="display:none"/>
+                <header class="co-header">
+                    <div class="co-title">
+                        <span class="t1">Pedidos de Componentes</span>
+                        <span class="t2" t-esc="board.name"/>
+                    </div>
+                    <t t-if="operator_name"><span class="co-chip">Operario: <t t-esc="operator_name"/></span></t>
+                    <span class="co-clock" id="tvc-clock" t-esc="now_label"/>
+                </header>
+                <div class="co-main">
+                    <div class="co-primary">
+                        <div class="co-caption">SOLICITUDES DE COMPONENTES</div>
+                        <div class="co-list">
+                            <t t-foreach="requests" t-as="r">
+                                <div class="co-card">
+                                    <t t-if="r['image']"><div class="co-img"><img t-att-src="r['image']"/></div></t>
+                                    <div class="co-info">
+                                        <div class="co-t" t-esc="r['name']"/>
+                                        <t t-if="r['category']"><div class="co-cat" t-esc="r['category']"/></t>
+                                        <t t-if="r['description']"><div class="co-desc" t-esc="r['description']"/></t>
+                                        <div class="co-val">$<t t-esc="r['value']"/></div>
+                                    </div>
+                                    <div class="co-act">
+                                        <div class="row">
+                                            <button t-attf-class="comp-btn b-req#{' done' if r['state'] in ('requested','delivered') else ''}"
+                                                    t-att-data-id="r['id']" data-state="requested">Solicitado al proveedor</button>
+                                            <span class="comp-time" t-attf-id="ts-req-#{r['id']}" t-att-data-ts="r['requested_ts']"/>
+                                        </div>
+                                        <div class="row">
+                                            <button t-attf-class="comp-btn b-del#{' done' if r['state'] == 'delivered' else ''}"
+                                                    t-att-data-id="r['id']" data-state="delivered">Entregado al operario</button>
+                                            <span class="comp-time" t-attf-id="ts-del-#{r['id']}" t-att-data-ts="r['delivered_ts']"/>
+                                        </div>
+                                    </div>
+                                </div>
+                            </t>
+                            <t t-if="not requests">
+                                <div class="co-empty">No hay solicitudes pendientes.</div>
+                            </t>
+                        </div>
+                    </div>
+                    <div class="co-side">
+                        <div class="co-epp" t-esc="epp_message"/>
+                        <div class="co-sched">
+                            <div class="s-cap">HORARIO DEL DIA — <t t-esc="today_label"/></div>
+                            <div class="s-rows">
+                                <t t-foreach="slots" t-as="slot">
+                                    <div class="s-row">
+                                        <div class="s-time" t-esc="slot['time']"/>
+                                        <t t-if="slot['activity']">
+                                            <div class="s-act pill" t-attf-style="background:#{slot['color']}" t-esc="slot['activity']"/>
+                                        </t>
+                                        <t t-else=""><div class="s-act" style="opacity:.35">—</div></t>
+                                    </div>
+                                </t>
+                            </div>
+                        </div>
+                        <div class="co-notice">
+                            <div class="n-title">AVISOS</div>
+                            <t t-if="notice_message"><div class="n-body" t-esc="notice_message"/></t>
+                            <t t-else=""><div class="n-body" style="opacity:.6">Sin avisos.</div></t>
+                        </div>
+                    </div>
+                </div>
+                <script type="text/javascript">
+                    (function () {
+                        var el = document.getElementById('tvc-clock');
+                        if (!el) { return; }
+                        function pad(n) { return (n &lt; 10 ? '0' : '') + n; }
+                        function tick() {
+                            var d = new Date(); var h = d.getHours(); var ap = h &lt; 12 ? 'am' : 'pm';
+                            var h12 = h % 12; if (h12 === 0) { h12 = 12; }
+                            el.textContent = pad(d.getDate()) + '/' + pad(d.getMonth() + 1) + '/' + d.getFullYear() +
+                                ' ' + pad(h12) + ':' + pad(d.getMinutes()) + ' ' + ap;
+                        }
+                        tick(); setInterval(tick, 15000);
+                    })();
+                </script>
+                <script type="text/javascript" src="/tv_calendar/static/src/js/tv_kiosk_interactive.js"/>
             </body>
         </html>
     </template>

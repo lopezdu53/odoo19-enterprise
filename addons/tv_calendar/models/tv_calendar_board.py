@@ -44,6 +44,8 @@ class TvCalendarBoard(models.Model):
             ('projects', 'Proyectos por entregar'),
             ('operator', 'Operario'),
             ('mecanizado', 'Mecanizado'),
+            ('electric', 'Electricos con Inventario'),
+            ('component_orders', 'Pedidos de Componentes'),
             ('ad', 'Publicidad'),
         ],
         string='Tipo de plantilla', default='schedule', required=True,
@@ -108,6 +110,17 @@ class TvCalendarBoard(models.Model):
     task_board_id = fields.Many2one(
         'tv.calendar.board', string='Tareas del tablero',
         help="De que tablero tomar las tareas del dia. Vacio = este mismo tablero.")
+
+    # --- Plantilla Electricos con Inventario ---
+    category_ids = fields.Many2many(
+        'product.category', 'tv_calendar_board_category_rel', 'board_id', 'category_id',
+        string='Categorias de inventario',
+        help="Categorias de producto que el operario podra solicitar en el TV.")
+
+    # --- Plantilla Pedidos de Componentes ---
+    component_source_board_id = fields.Many2one(
+        'tv.calendar.board', string='Tablero de electricos',
+        help="De que tablero (Electricos) tomar las solicitudes. Vacio = este mismo.")
 
     # --- Plantilla Publicidad ---
     youtube_url = fields.Char(

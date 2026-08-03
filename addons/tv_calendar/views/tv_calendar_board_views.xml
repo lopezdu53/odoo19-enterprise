@@ -28,7 +28,7 @@
                             icon="fa-refresh"/>
                     <button name="action_load_standard_schedule" type="object"
                             string="Cargar horario estandar" icon="fa-clock-o"
-                            invisible="template_type not in ('operator', 'mecanizado')"/>
+                            invisible="template_type not in ('operator', 'mecanizado', 'electric', 'component_orders')"/>
                 </header>
                 <sheet>
                     <div class="oe_button_box" name="button_box">
@@ -65,7 +65,7 @@
                     </group>
 
                     <!-- Operario -->
-                    <group invisible="template_type not in ('operator', 'mecanizado')">
+                    <group invisible="template_type not in ('operator', 'mecanizado', 'electric', 'component_orders')">
                         <group string="Operario">
                             <field name="employee_id"/>
                             <field name="operator_name"/>
@@ -82,7 +82,7 @@
                         </group>
                     </group>
                     <group string="Horario del turno"
-                           invisible="template_type not in ('operator', 'mecanizado')">
+                           invisible="template_type not in ('operator', 'mecanizado', 'electric', 'component_orders')">
                         <field name="time_slot_ids" nolabel="1">
                             <list editable="bottom">
                                 <field name="sequence" widget="handle"/>
@@ -90,6 +90,21 @@
                                 <field name="activity"/>
                             </list>
                         </field>
+                    </group>
+
+                    <!-- Electricos con Inventario -->
+                    <group string="Inventario (categorias que puede solicitar el operario)"
+                           invisible="template_type != 'electric'">
+                        <field name="category_ids" widget="many2many_tags" nolabel="1"
+                               options="{'no_create': True}"/>
+                    </group>
+
+                    <!-- Pedidos de Componentes -->
+                    <group string="Origen de solicitudes"
+                           invisible="template_type != 'component_orders'">
+                        <field name="component_source_board_id"
+                               options="{'no_create': True}"
+                               domain="[('template_type', '=', 'electric')]"/>
                     </group>
 
                     <!-- Publicidad -->
