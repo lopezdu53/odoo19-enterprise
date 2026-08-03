@@ -67,6 +67,9 @@ class TvCalendarController(http.Controller):
             'now_label': now_label,
             'month_name': MONTHS_ES[today.month - 1],
             'year': today.year,
+            # Cache-busting del JS estatico: cambia en cada carga para que el
+            # navegador del TV no sirva una version vieja del script.
+            'asset_v': str(int(fields.Datetime.now().replace(tzinfo=timezone.utc).timestamp())),
         }
 
         if board.template_type == 'projects':

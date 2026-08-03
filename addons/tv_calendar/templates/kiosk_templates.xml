@@ -360,7 +360,7 @@
                                 </div>
                             </div>
                         </div>
-                        <script type="text/javascript" src="/tv_calendar/static/src/js/tv_kiosk_interactive.js"/>
+                        <script type="text/javascript" t-attf-src="/tv_calendar/static/src/js/tv_kiosk_interactive.js?v=#{asset_v}"/>
                     </t>
                 </t>
                 <t t-else="">
@@ -845,28 +845,6 @@
                             </t>
                         </div>
                     </div>
-                    <div class="co-side">
-                        <div class="co-epp" t-esc="epp_message"/>
-                        <div class="co-sched">
-                            <div class="s-cap">HORARIO DEL DIA — <t t-esc="today_label"/></div>
-                            <div class="s-rows">
-                                <t t-foreach="slots" t-as="slot">
-                                    <div class="s-row">
-                                        <div class="s-time" t-esc="slot['time']"/>
-                                        <t t-if="slot['activity']">
-                                            <div class="s-act pill" t-attf-style="background:#{slot['color']}" t-esc="slot['activity']"/>
-                                        </t>
-                                        <t t-else=""><div class="s-act" style="opacity:.35">—</div></t>
-                                    </div>
-                                </t>
-                            </div>
-                        </div>
-                        <div class="co-notice">
-                            <div class="n-title">AVISOS</div>
-                            <t t-if="notice_message"><div class="n-body" t-esc="notice_message"/></t>
-                            <t t-else=""><div class="n-body" style="opacity:.6">Sin avisos.</div></t>
-                        </div>
-                    </div>
                 </div>
                 <script type="text/javascript">
                     (function () {
@@ -882,7 +860,7 @@
                         tick(); setInterval(tick, 15000);
                     })();
                 </script>
-                <script type="text/javascript" src="/tv_calendar/static/src/js/tv_kiosk_interactive.js"/>
+                <script type="text/javascript" t-attf-src="/tv_calendar/static/src/js/tv_kiosk_interactive.js?v=#{asset_v}"/>
             </body>
         </html>
     </template>
