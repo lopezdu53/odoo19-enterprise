@@ -486,6 +486,8 @@
                         opacity: .8; text-transform: uppercase; letter-spacing: .2px; line-height: 1.02; }
                     .pj-card .c-date .c-val { display: block; font-size: clamp(7px, .58vw, 11px); font-weight: 800;
                         line-height: 1.05; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+                    .pj-card .c-desc { font-size: clamp(6px, .55vw, 11px); font-weight: 600; opacity: .95; margin-top: .05vh;
+                        white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
                     .pj-card .c-mac { font-size: clamp(6px, .52vw, 10px); font-weight: 700; margin-top: .1vh;
                         white-space: normal; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; }
                     /* Tipos que solo muestran el cliente */
@@ -562,6 +564,7 @@
                                                     <div t-attf-class="pj-card#{' done' if p['done'] else ''}" t-attf-style="background:#{p['color']}">
                                                         <div class="pc-main">
                                                             <div class="c-client" t-esc="p['client']"/>
+                                                            <t t-if="p['description']"><div class="c-desc" t-esc="p['description']"/></t>
                                                             <t t-if="p['machines']"><div class="c-mac" t-esc="p['machines']"/></t>
                                                         </div>
                                                         <div class="pc-dates">

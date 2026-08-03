@@ -500,6 +500,7 @@ class TvCalendarController(http.Controller):
             color = DELIVERY_TYPE_COLORS.get(prj.delivery_type) or prj.importance_hex()
         return {
             'client': prj.client or '',
+            'description': prj.description or '',
             'delivery_type': prj.delivery_type,
             'type_label': DELIVERY_TYPE_LABELS.get(prj.delivery_type, ''),
             'order_ref': prj.order_ref or '',

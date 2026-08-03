@@ -56,6 +56,7 @@ class TvCalendarProject(models.Model):
         DELIVERY_TYPES, string='Tipo de entrega', default='project', required=True,
         help="'Proyecto' muestra todo (cliente, fechas, maquinas, avance). "
              "Los demas tipos muestran solo el cliente en el TV.")
+    description = fields.Char(string='Descripcion corta')
     order_ref = fields.Char(string='# Cotizacion / OC', tracking=True)
     order_date = fields.Date(string='Fecha de orden', tracking=True)
     delivery_date = fields.Date(

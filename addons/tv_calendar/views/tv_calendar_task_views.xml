@@ -8,6 +8,8 @@
                 <field name="date"/>
                 <field name="date_end" optional="hide"/>
                 <field name="name"/>
+                <field name="project_id" optional="show"/>
+                <field name="stage" optional="hide"/>
                 <field name="board_ids" widget="many2many_tags"/>
                 <field name="importance" widget="badge"
                        decoration-danger="importance == 'critical'"
