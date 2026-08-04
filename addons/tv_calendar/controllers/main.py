@@ -744,6 +744,17 @@ class TvCalendarController(http.Controller):
             'running_ts': self._dt_ts(task.work_running_since),
         })
 
+    @http.route('/tv/ping/<string:access_token>', type='http',
+                auth='public', csrf=False, methods=['POST', 'GET'], sitemap=False)
+    def tv_ping(self, access_token, device=None, **kw):
+        """Latido del kiosco: marca el dispositivo como en linea."""
+        board = self._board_by_token(access_token)
+        if not board:
+            return self._json({'error': 'not_found'})
+        ip = request.httprequest.remote_addr
+        request.env['tv.calendar.device'].sudo().register_ping(board, device, ip)
+        return self._json({'ok': True})
+
     # ------------------------------------------------------------------
     # Publicidad
     # ------------------------------------------------------------------

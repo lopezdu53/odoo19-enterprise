@@ -220,6 +220,33 @@
                     .et-comp { display: flex; justify-content: space-between; gap: 1vw; font-size: clamp(11px, 1.1vw, 20px); }
                     .et-comp-d { font-weight: 700; opacity: .82; }
                     .et-comp-d.ok { color: #a5d6a7; opacity: 1; }
+
+                    /* ===== Compatibilidad WebView viejo (onn): el "gap" de flexbox
+                       no existe antes de Chromium 84, por eso los textos se
+                       amontonaban. Lo sustituimos por margenes equivalentes. ===== */
+                    header.tvc-header { gap: 0; }
+                    .tvc-title { gap: 0; } .tvc-title > * + * { margin-left: 1.2vw; }
+                    .tvc-right { gap: 0; } .tvc-right > * + * { margin-left: 1.4vw; }
+                    .tvc-legend { gap: 0; } .tvc-legend > * + * { margin-left: 1.2vw; }
+                    .tvc-legend .item { gap: 0; } .tvc-legend .item > * + * { margin-left: .5vw; }
+                    .tvc-tasks { gap: 0; } .tvc-tasks > * + * { margin-top: .5vh; }
+                    .tvc-task.tvc-split { gap: 0; } .tvc-task.tvc-split > * + * { margin-left: .7vw; }
+                    .op-main { gap: 0; } .op-main > * + * { margin-left: 6px; }
+                    .big-tasks { gap: 0; } .big-tasks > * + * { margin-top: 1vh; }
+                    .big-task { gap: 0; } .big-task > * + * { margin-left: 1.2vw; }
+                    .big-task .bt-content { gap: 0; } .big-task .bt-content > * + * { margin-top: .3vh; }
+                    .op-secondary { gap: 0; } .op-secondary > * + * { margin-top: 6px; }
+                    .op-epp { gap: 0; } .op-epp > * + * { margin-top: .4vh; }
+                    .op-ban2 { gap: 0; } .op-ban2 > * + * { margin-left: .6vw; }
+                    .s-row { gap: 0; } .s-row > * + * { margin-left: .6vw; }
+                    .req-modal .req-box { gap: 0; } .req-modal .req-box > * + * { margin-top: 1.4vh; }
+                    .req-modal .req-actions { gap: 0; } .req-modal .req-actions > * + * { margin-left: 1vw; }
+                    .et-panel { gap: 0; } .et-panel > * + * { margin-top: .5vh; }
+                    .et-controls { gap: 0; } .et-controls > * + * { margin-left: .5vw; }
+                    .et-stamps { gap: 0; } .et-stamps > * + * { margin-left: 1.2vw; }
+                    .et-comp { gap: 0; } .et-comp > * + * { margin-left: 1vw; }
+                    /* el cronometro sigue empujado a la derecha */
+                    .et-controls .et-timer { margin-left: auto; }
                 </style>
             </head>
             <body t-attf-class="theme-#{theme}">
@@ -608,6 +635,18 @@
                     .pj-mini .m-day .dot { position: absolute; bottom: 8%; width: 26%; height: 26%; min-width: 5px; min-height: 5px;
                         border-radius: 50%; background: var(--today); }
                     .pj-mini .m-day.h .dot { background: #fff; }
+
+                    /* Compatibilidad WebView viejo (onn): flex-gap -> margenes */
+                    header.pj-header { gap: 0; }
+                    .pj-title { gap: 0; } .pj-title > * + * { margin-left: 1vw; }
+                    .pj-legend { gap: 0; } .pj-legend > * + * { margin-left: 1vw; }
+                    .pj-legend .lg-group { gap: 0; } .pj-legend .lg-group > * + * { margin-left: .55vw; }
+                    .pj-legend .lg-item { gap: 0; } .pj-legend .lg-item > * + * { margin-left: .2vw; }
+                    .pj-main { gap: 0; } .pj-main > * + * { margin-left: 6px; }
+                    .pj-projects { gap: 0; } .pj-projects > * + * { margin-top: .3vh; }
+                    .pj-card { gap: 0; } .pj-card > * + * { margin-left: .4vw; }
+                    .pj-card.simple > * + * { margin-left: 0; margin-top: .2vh; }
+                    .pj-side { gap: 0; } .pj-side > * + * { margin-top: 6px; }
                 </style>
             </head>
             <body t-attf-class="theme-#{theme}">
@@ -801,6 +840,16 @@
                         max-height:26vh; display:flex; flex-direction:column; overflow:hidden; }
                     .co-notice .n-title { background:#f9a825; color:#1a2233; padding:.6vh 1vw; font-size:clamp(12px,1.3vw,22px); font-weight:800; }
                     .co-notice .n-body { padding:.8vh 1vw; font-size:clamp(12px,1.2vw,22px); font-weight:600; white-space:pre-wrap; overflow:auto; }
+
+                    /* Compatibilidad WebView viejo (onn): flex-gap -> margenes */
+                    header.co-header { gap: 0; }
+                    .co-title { gap: 0; } .co-title > * + * { margin-left: 1.2vw; }
+                    .co-main { gap: 0; } .co-main > * + * { margin-left: 6px; }
+                    .co-list { gap: 0; } .co-list > * + * { margin-top: 1vh; }
+                    .co-card { gap: 0; } .co-card > * + * { margin-left: 1vw; }
+                    .co-info { gap: 0; } .co-info > * + * { margin-top: .2vh; }
+                    .co-act { gap: 0; } .co-act > * + * { margin-top: .5vh; }
+                    .co-act .row { gap: 0; } .co-act .row > * + * { margin-left: .6vw; }
                 </style>
             </head>
             <body t-attf-class="theme-#{theme}">

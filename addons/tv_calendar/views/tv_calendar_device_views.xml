@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_tv_calendar_device_list" model="ir.ui.view">
+        <field name="name">tv.calendar.device.list</field>
+        <field name="model">tv.calendar.device</field>
+        <field name="arch" type="xml">
+            <list string="Pantallas" create="false"
+                  decoration-success="status == 'online'"
+                  decoration-danger="status == 'offline'">
+                <field name="status" widget="badge"
+                       decoration-success="status == 'online'"
+                       decoration-danger="status == 'offline'"/>
+                <field name="name"/>
+                <field name="board_id"/>
+                <field name="last_seen"/>
+                <field name="last_ip" optional="hide"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_tv_calendar_device_form" model="ir.ui.view">
+        <field name="name">tv.calendar.device.form</field>
+        <field name="model">tv.calendar.device</field>
+        <field name="arch" type="xml">
+            <form string="Pantalla">
+                <sheet>
+                    <div class="oe_title">
+                        <label for="name"/>
+                        <h1><field name="name"/></h1>
+                    </div>
+                    <group>
+                        <field name="status"/>
+                        <field name="board_id"/>
+                        <field name="last_seen"/>
+                        <field name="last_ip"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_tv_calendar_device_search" model="ir.ui.view">
+        <field name="name">tv.calendar.device.search</field>
+        <field name="model">tv.calendar.device</field>
+        <field name="arch" type="xml">
+            <search string="Buscar pantallas">
+                <field name="name"/>
+                <field name="board_id"/>
+                <filter name="online" string="En linea" domain="[('status', '=', 'online')]"/>
+                <filter name="offline" string="Desconectadas" domain="[('status', '=', 'offline')]"/>
+                <filter name="group_board" string="Tablero" context="{'group_by': 'board_id'}"/>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_tv_calendar_device" model="ir.actions.act_window">
+        <field name="name">Pantallas (dispositivos)</field>
+        <field name="res_model">tv.calendar.device</field>
+        <field name="view_mode">list,form</field>
+        <field name="search_view_id" ref="view_tv_calendar_device_search"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Aun no hay pantallas registradas</p>
+            <p>Cada dispositivo con la app TV Kiosk aparecera aqui en verde cuando este en linea.</p>
+        </field>
+    </record>
+
+    <menuitem id="menu_tv_calendar_devices" name="Pantallas (dispositivos)"
+              parent="menu_tv_calendar_root"
+              action="action_tv_calendar_device" sequence="20"/>
+</odoo>

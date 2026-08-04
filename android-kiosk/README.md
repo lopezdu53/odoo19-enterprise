@@ -10,8 +10,10 @@ todas**: cada dispositivo pide la URL una sola vez y la recuerda.
 - Abre la URL a pantalla completa, sin barras del navegador.
 - Mantiene la pantalla **siempre encendida**.
 - Reintenta cargar si al encender todavía no hay red.
-- **Botón "atrás" o "menú"** → abre un menú con *Recargar / Cambiar URL / Salir*
-  (así el operario no sale del kiosco por accidente).
+- **Latido a Odoo cada 60 s**: cada pantalla aparece **en verde** ("En línea")
+  en *TV → Pantallas (dispositivos)* mientras la app está abierta.
+- **Botón "atrás" o "menú"** → menú con *Recargar / Configurar / Permiso de
+  arranque / Salir* (así el operario no sale del kiosco por accidente).
 - Funciona en **onn. Google TV** (Android TV) y en tablets/pantallas onn.
 
 ## Cómo obtener el APK (sin instalar nada)
@@ -30,20 +32,22 @@ El APK se compila solo en GitHub Actions:
    (Ajustes → Apps / Seguridad). En Android TV suele usarse la app
    **Downloader** para abrir el enlace del Release y descargar el APK.
 2. Instala `tv-kiosk.apk`.
-3. Ábrela una vez y **pega la URL** del tablero de esa pantalla (la del botón
-   *Abrir en el TV* de Odoo). Se guarda.
+3. Ábrela una vez y escribe:
+   - la **URL** del tablero de esa pantalla (la del botón *Abrir en el TV*),
+   - el **nombre de la pantalla** (ej: *Ventas 2do piso*) — es el que se verá
+     en Odoo para saber cuál está en línea.
 
 ## Que arranque sola al encender
 
-La app trae dos mecanismos; con cualquiera de los dos basta:
+En los onn que **no tienen** la opción "app de inicio", usa el **permiso de
+arranque** que ahora pide la propia app:
 
-- **Arranque automático (BOOT):** ya viene activado. En algunos Android hay que
-  abrir la app una vez después de instalarla para que el arranque quede
-  habilitado.
-- **App de inicio (recomendado en Android TV):** ponla como aplicación de inicio
-  por defecto. Al encender, el sistema abre la app de inicio = el kiosco.
-  En Android suele ser *Ajustes → Apps → Aplicaciones predeterminadas → App de
-  inicio → TV Kiosk*.
+- Al configurarla por primera vez, aparece *"Permitir arranque automático"* →
+  **Abrir ajustes** → activa **"Mostrar sobre otras apps"** para TV Kiosk.
+  Con ese permiso, la app puede abrirse sola al encender (receptor de BOOT).
+- Si lo saltaste, entra por el menú (**atrás/menú → Permiso de arranque**).
+- Si el dispositivo **sí** tiene "app de inicio predeterminada", ponerla también
+  funciona (es lo más fiable donde exista).
 
 ## Cambiar la URL más tarde
 
