@@ -1,0 +1,59 @@
+name: Build TV Kiosk APK
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'android-kiosk/**'
+      - '.github/workflows/build-kiosk-apk.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install SDK packages
+        run: |
+          yes | sdkmanager "platform-tools" "platforms;android-34" "build-tools;34.0.0" >/dev/null || true
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.7'
+
+      - name: Build debug APK
+        working-directory: android-kiosk
+        run: gradle assembleDebug --no-daemon --stacktrace
+
+      - name: Rename APK
+        run: cp android-kiosk/app/build/outputs/apk/debug/app-debug.apk tv-kiosk.apk
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: tv-kiosk-apk
+          path: tv-kiosk.apk
+
+      - name: Publish to release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: kiosk-latest
+          name: TV Kiosk (ultima version)
+          body: >
+            APK del kiosco para las pantallas del TV. Descarga tv-kiosk.apk,
+            instalalo en cada dispositivo onn y pega la URL del tablero.
+          files: tv-kiosk.apk
