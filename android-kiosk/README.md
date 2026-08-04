@@ -49,9 +49,25 @@ arranque** que ahora pide la propia app:
 - Si el dispositivo **sí** tiene "app de inicio predeterminada", ponerla también
   funciona (es lo más fiable donde exista).
 
-## Cambiar la URL más tarde
+## Apagado programado de la pantalla
 
-Con un control/teclado, pulsa **atrás** o **menú** sobre la pantalla → *Cambiar URL*.
+El horario se define en **Odoo → Tablero → "Apagado programado de la pantalla"**
+(hora de encender/apagar, lunes a viernes, y opción de fin de semana). La app
+pregunta cada 60 s y, fuera de horario:
+
+- Si activaste **Apagado de pantalla** (menú → *Apagado de pantalla (activar)*),
+  la app **duerme el equipo** (el monitor entra en standby). El encendido es
+  **manual**. Requiere aceptar una vez el "Administrador de dispositivo".
+- Si no lo activaste, solo pone la **pantalla en negro** (el equipo sigue
+  encendido).
+
+Cualquier toque/tecla da **5 minutos** antes de volver a apagar, para poder
+reconfigurar en horario de apagado.
+
+## Cambiar la configuración más tarde
+
+Con un control/teclado, pulsa **atrás** o **menú** → *Configurar / fuente /
+permisos*.
 
 ## Compilar en tu PC (opcional)
 

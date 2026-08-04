@@ -2,6 +2,8 @@ package com.tvcalendar.kiosk;
 
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.app.admin.DevicePolicyManager;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -52,8 +54,11 @@ public class MainActivity extends Activity {
 
     private WebView web;
     private View blackout;
+    private DevicePolicyManager dpm;
+    private ComponentName adminComp;
     private final Handler handler = new Handler(Looper.getMainLooper());
     private boolean pendingReload = false;
+    private long suppressLockUntil = 0L;
 
     private final Runnable heartbeat = new Runnable() {
         @Override
@@ -67,6 +72,9 @@ public class MainActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+
+        dpm = (DevicePolicyManager) getSystemService(Context.DEVICE_POLICY_SERVICE);
+        adminComp = new ComponentName(this, KioskAdminReceiver.class);
 
         FrameLayout root = new FrameLayout(this);
         web = new WebView(this);
@@ -247,15 +255,54 @@ public class MainActivity extends Activity {
         }
     }
 
-    /** Muestra u oculta la capa negra segun el horario configurado en Odoo. */
+    /** Aplica el estado de pantalla del horario configurado en Odoo. */
     private void applyScreen(String screen) {
-        if (blackout == null) {
+        if ("off".equals(screen)) {
+            if (System.currentTimeMillis() < suppressLockUntil) {
+                // Alguien esta usando el equipo: no apagar todavia.
+                return;
+            }
+            if (isAdminActive()) {
+                // Apagado real: duerme el equipo (el monitor entra en standby).
+                lockScreen();
+            } else if (blackout != null) {
+                // Respaldo si no se activo el administrador: pantalla en negro.
+                blackout.setVisibility(View.VISIBLE);
+            }
+        } else if ("on".equals(screen)) {
+            if (blackout != null) {
+                blackout.setVisibility(View.GONE);
+            }
+        }
+    }
+
+    private boolean isAdminActive() {
+        return dpm != null && dpm.isAdminActive(adminComp);
+    }
+
+    private void lockScreen() {
+        try {
+            dpm.lockNow();
+        } catch (Exception ignored) {
+        }
+    }
+
+    private void requestAdmin() {
+        if (isAdminActive()) {
+            new AlertDialog.Builder(this)
+                    .setTitle("Apagado de pantalla")
+                    .setMessage("El apagado real de pantalla ya esta activado.")
+                    .setPositiveButton("OK", null)
+                    .show();
             return;
         }
-        if ("off".equals(screen)) {
-            blackout.setVisibility(View.VISIBLE);
-        } else if ("on".equals(screen)) {
-            blackout.setVisibility(View.GONE);
+        try {
+            Intent i = new Intent(DevicePolicyManager.ACTION_ADD_DEVICE_ADMIN);
+            i.putExtra(DevicePolicyManager.EXTRA_DEVICE_ADMIN, adminComp);
+            i.putExtra(DevicePolicyManager.EXTRA_ADD_EXPLANATION,
+                    "Permite que la pantalla se apague sola en el horario programado.");
+            startActivity(i);
+        } catch (Exception ignored) {
         }
     }
 
@@ -369,7 +416,7 @@ public class MainActivity extends Activity {
         int z = prefs().getInt(KEY_ZOOM, DEFAULT_ZOOM);
         final String[] items = {"Recargar", "Reducir fuente (-)",
                 "Aumentar fuente (+)", "Configurar (URL / nombre)",
-                "Permiso de arranque", "Salir"};
+                "Permiso de arranque", "Apagado de pantalla (activar)", "Salir"};
         new AlertDialog.Builder(this)
                 .setTitle("TV Kiosk  ·  fuente " + z + "%")
                 .setItems(items, new DialogInterface.OnClickListener() {
@@ -385,6 +432,8 @@ public class MainActivity extends Activity {
                             promptForConfig(false);
                         } else if (which == 4) {
                             openOverlaySettings();
+                        } else if (which == 5) {
+                            requestAdmin();
                         } else {
                             finish();
                         }
@@ -406,6 +455,13 @@ public class MainActivity extends Activity {
             return true;
         }
         return super.onKeyDown(keyCode, event);
+    }
+
+    @Override
+    public void onUserInteraction() {
+        super.onUserInteraction();
+        // Cualquier toque/tecla da 5 min de gracia antes de apagar la pantalla.
+        suppressLockUntil = System.currentTimeMillis() + 5 * 60 * 1000L;
     }
 
     @Override
