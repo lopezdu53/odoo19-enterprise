@@ -42,6 +42,8 @@ public class MainActivity extends Activity {
     private static final String KEY_URL = "url";
     private static final String KEY_DEVICE = "device";
     private static final String KEY_OVERLAY_ASKED = "overlay_asked";
+    private static final String KEY_ZOOM = "zoom";
+    private static final int DEFAULT_ZOOM = 80;   // % del tamano de fuente
     private static final long HEARTBEAT_MS = 60000L;
 
     private WebView web;
@@ -89,15 +91,16 @@ public class MainActivity extends Activity {
         WebSettings s = web.getSettings();
         s.setJavaScriptEnabled(true);
         s.setDomStorageEnabled(true);
-        // Ignorar el ajuste de "tamano de fuente" del sistema del dispositivo:
-        // asi el TV se ve igual que en el navegador (100%), no gigante.
-        s.setTextZoom(100);
+        // Tamano de fuente controlable (ignora el ajuste del sistema del onn).
+        // Ajustable desde el menu (Reducir / Aumentar fuente).
+        s.setTextZoom(prefs().getInt(KEY_ZOOM, DEFAULT_ZOOM));
         s.setMediaPlaybackRequiresUserGesture(false);
         s.setLoadWithOverviewMode(true);
         s.setUseWideViewPort(true);
         s.setBuiltInZoomControls(false);
         s.setSupportZoom(false);
-        s.setCacheMode(WebSettings.LOAD_DEFAULT);
+        // Sin cache: siempre carga la ultima version de la pagina del tablero.
+        s.setCacheMode(WebSettings.LOAD_NO_CACHE);
         if (Build.VERSION.SDK_INT >= 21) {
             s.setMixedContentMode(WebSettings.MIXED_CONTENT_ALWAYS_ALLOW);
         }
@@ -292,21 +295,42 @@ public class MainActivity extends Activity {
     }
 
     // ------------------------------------------------------------------
+    // Tamano de fuente (zoom del texto)
+    // ------------------------------------------------------------------
+    private void changeZoom(int delta) {
+        int z = prefs().getInt(KEY_ZOOM, DEFAULT_ZOOM) + delta;
+        if (z < 50) {
+            z = 50;
+        }
+        if (z > 150) {
+            z = 150;
+        }
+        prefs().edit().putInt(KEY_ZOOM, z).apply();
+        web.getSettings().setTextZoom(z);
+    }
+
+    // ------------------------------------------------------------------
     // Menu (boton atras / menu)
     // ------------------------------------------------------------------
     private void showMenu() {
-        final String[] items = {"Recargar", "Configurar (URL / nombre)",
+        int z = prefs().getInt(KEY_ZOOM, DEFAULT_ZOOM);
+        final String[] items = {"Recargar", "Reducir fuente (-)",
+                "Aumentar fuente (+)", "Configurar (URL / nombre)",
                 "Permiso de arranque", "Salir"};
         new AlertDialog.Builder(this)
-                .setTitle("TV Kiosk")
+                .setTitle("TV Kiosk  ·  fuente " + z + "%")
                 .setItems(items, new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface d, int which) {
                         if (which == 0) {
                             web.reload();
                         } else if (which == 1) {
-                            promptForConfig(false);
+                            changeZoom(-10);
                         } else if (which == 2) {
+                            changeZoom(10);
+                        } else if (which == 3) {
+                            promptForConfig(false);
+                        } else if (which == 4) {
                             openOverlaySettings();
                         } else {
                             finish();
