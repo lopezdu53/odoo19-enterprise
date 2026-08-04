@@ -26,6 +26,10 @@ import android.widget.EditText;
 import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 
+import org.json.JSONObject;
+
+import java.io.ByteArrayOutputStream;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
@@ -47,6 +51,7 @@ public class MainActivity extends Activity {
     private static final long HEARTBEAT_MS = 60000L;
 
     private WebView web;
+    private View blackout;
     private final Handler handler = new Handler(Looper.getMainLooper());
     private boolean pendingReload = false;
 
@@ -66,6 +71,13 @@ public class MainActivity extends Activity {
         FrameLayout root = new FrameLayout(this);
         web = new WebView(this);
         root.addView(web, new FrameLayout.LayoutParams(
+                FrameLayout.LayoutParams.MATCH_PARENT,
+                FrameLayout.LayoutParams.MATCH_PARENT));
+        // Capa negra para el "apagado" programado (encima del WebView).
+        blackout = new View(this);
+        blackout.setBackgroundColor(0xFF000000);
+        blackout.setVisibility(View.GONE);
+        root.addView(blackout, new FrameLayout.LayoutParams(
                 FrameLayout.LayoutParams.MATCH_PARENT,
                 FrameLayout.LayoutParams.MATCH_PARENT));
         setContentView(root);
@@ -195,6 +207,15 @@ public class MainActivity extends Activity {
                     os.flush();
                     os.close();
                     c.getResponseCode();
+                    final String screen = readScreen(c.getInputStream());
+                    if (screen != null) {
+                        handler.post(new Runnable() {
+                            @Override
+                            public void run() {
+                                applyScreen(screen);
+                            }
+                        });
+                    }
                 } catch (Exception ignored) {
                     // sin conexion: se reintenta en el siguiente latido
                 } finally {
@@ -204,6 +225,38 @@ public class MainActivity extends Activity {
                 }
             }
         }).start();
+    }
+
+    /** Lee el cuerpo JSON del latido y devuelve "on"/"off" (o null). */
+    private String readScreen(InputStream in) {
+        if (in == null) {
+            return null;
+        }
+        try {
+            ByteArrayOutputStream bos = new ByteArrayOutputStream();
+            byte[] buf = new byte[1024];
+            int n;
+            while ((n = in.read(buf)) != -1) {
+                bos.write(buf, 0, n);
+            }
+            JSONObject o = new JSONObject(bos.toString("UTF-8"));
+            String s = o.optString("screen", "");
+            return s.isEmpty() ? null : s;
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    /** Muestra u oculta la capa negra segun el horario configurado en Odoo. */
+    private void applyScreen(String screen) {
+        if (blackout == null) {
+            return;
+        }
+        if ("off".equals(screen)) {
+            blackout.setVisibility(View.VISIBLE);
+        } else if ("on".equals(screen)) {
+            blackout.setVisibility(View.GONE);
+        }
     }
 
     // ------------------------------------------------------------------

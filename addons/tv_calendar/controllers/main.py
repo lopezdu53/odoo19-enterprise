@@ -747,13 +747,31 @@ class TvCalendarController(http.Controller):
     @http.route('/tv/ping/<string:access_token>', type='http',
                 auth='public', csrf=False, methods=['POST', 'GET'], sitemap=False)
     def tv_ping(self, access_token, device=None, **kw):
-        """Latido del kiosco: marca el dispositivo como en linea."""
+        """Latido del kiosco: marca el dispositivo como en linea y devuelve
+        si la pantalla debe estar encendida ('on') o en negro ('off')."""
         board = self._board_by_token(access_token)
         if not board:
             return self._json({'error': 'not_found'})
         ip = request.httprequest.remote_addr
         request.env['tv.calendar.device'].sudo().register_ping(board, device, ip)
-        return self._json({'ok': True})
+        return self._json({'ok': True, 'screen': self._screen_state(board)})
+
+    def _screen_state(self, board):
+        """'on' si la pantalla debe mostrar contenido; 'off' si va en negro."""
+        if not board.power_schedule_enabled:
+            return 'on'
+        tz = pytz.timezone(self._board_tz(board))
+        now = pytz.utc.localize(fields.Datetime.now()).astimezone(tz)
+        if now.weekday() >= 5 and board.power_weekend_off:  # sabado/domingo
+            return 'off'
+        hour = now.hour + now.minute / 60.0
+        on_t = board.power_on_time or 0.0
+        off_t = board.power_off_time if board.power_off_time else 24.0
+        if on_t <= off_t:
+            on = on_t <= hour < off_t
+        else:  # ventana que cruza medianoche
+            on = hour >= on_t or hour < off_t
+        return 'on' if on else 'off'
 
     # ------------------------------------------------------------------
     # Publicidad

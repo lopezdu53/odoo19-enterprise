@@ -122,6 +122,21 @@ class TvCalendarBoard(models.Model):
         'tv.calendar.board', string='Tablero de electricos',
         help="De que tablero (Electricos) tomar las solicitudes. Vacio = este mismo.")
 
+    # --- Apagado programado de la pantalla (app APK) ---
+    power_schedule_enabled = fields.Boolean(
+        string='Apagar pantalla fuera de horario',
+        help="La app pone la pantalla en negro fuera del horario indicado "
+             "y la vuelve a mostrar sola. No apaga el equipo, solo la imagen.")
+    power_on_time = fields.Float(
+        string='Encender a las', default=7.0,
+        help="Hora (formato 24h) a la que la pantalla vuelve a mostrar contenido.")
+    power_off_time = fields.Float(
+        string='Apagar a las', default=18.0,
+        help="Hora (formato 24h) a la que la pantalla se pone en negro.")
+    power_weekend_off = fields.Boolean(
+        string='Apagar sabado y domingo', default=True,
+        help="Si esta activo, el fin de semana la pantalla permanece en negro.")
+
     # --- Plantilla Publicidad ---
     youtube_url = fields.Char(
         string='URL de la playlist de YouTube',

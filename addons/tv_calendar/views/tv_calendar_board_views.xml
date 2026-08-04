@@ -56,6 +56,22 @@
                         </group>
                     </group>
 
+                    <!-- Apagado programado de la pantalla (app APK) -->
+                    <group string="Apagado programado de la pantalla (app)">
+                        <field name="power_schedule_enabled"/>
+                        <field name="power_on_time" widget="float_time"
+                               invisible="not power_schedule_enabled"/>
+                        <field name="power_off_time" widget="float_time"
+                               invisible="not power_schedule_enabled"/>
+                        <field name="power_weekend_off"
+                               invisible="not power_schedule_enabled"/>
+                        <div colspan="2" class="text-muted"
+                             invisible="not power_schedule_enabled">
+                            La app pone la pantalla en negro fuera de este horario (lunes a
+                            viernes) y la reactiva sola. No apaga el equipo, solo la imagen.
+                        </div>
+                    </group>
+
                     <!-- Cronograma principal -->
                     <group string="Opciones del calendario"
                            invisible="template_type != 'schedule'">
