@@ -7,6 +7,8 @@
     <uses-permission android:name="android.permission.WAKE_LOCK"/>
     <!-- Permite que la app se abra sola al encender (arranque desde segundo plano) -->
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW"/>
+    <!-- Permite instalar/actualizar la propia app desde el link del Release -->
+    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES"/>
 
     <!-- Funciona en Android TV (onn. Google TV) y en tablets/pantallas tactiles -->
     <uses-feature android:name="android.software.leanback" android:required="false"/>

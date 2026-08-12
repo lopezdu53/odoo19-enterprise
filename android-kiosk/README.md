@@ -64,10 +64,22 @@ pregunta cada 60 s y, fuera de horario:
 Cualquier toque/tecla da **5 minutos** antes de volver a apagar, para poder
 reconfigurar en horario de apagado.
 
+## Sin conexión
+
+Si no hay internet o el servidor Odoo no responde, la app muestra una
+**pantalla informativa** ("Sin conexión" / "Servidor no disponible") y
+**reintenta sola** cada 5 s; en cuanto vuelve, carga el tablero.
+
+## Actualizar la app desde la propia app
+
+Menú → **Actualizar app**: descarga la última versión del *Release* (link
+fijo) y lanza el instalador. La primera vez pedirá activar **"Instalar apps
+desconocidas"** para TV Kiosk; actívalo y vuelve a pulsar *Actualizar app*.
+
 ## Cambiar la configuración más tarde
 
 Con un control/teclado, pulsa **atrás** o **menú** → *Configurar / fuente /
-permisos*.
+permisos / actualizar*.
 
 ## Compilar en tu PC (opcional)
 

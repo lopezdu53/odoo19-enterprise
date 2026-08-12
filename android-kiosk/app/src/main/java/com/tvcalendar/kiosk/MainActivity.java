@@ -2,25 +2,36 @@ package com.tvcalendar.kiosk;
 
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.app.DownloadManager;
 import android.app.admin.DevicePolicyManager;
+import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.SharedPreferences;
+import android.database.Cursor;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.Handler;
 import android.os.Looper;
 import android.provider.Settings;
 import android.text.InputType;
+import android.view.Gravity;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.WindowManager;
+import android.widget.LinearLayout;
+import android.widget.TextView;
+import android.widget.Toast;
+import android.graphics.Bitmap;
 import android.webkit.WebChromeClient;
 import android.webkit.WebResourceError;
 import android.webkit.WebResourceRequest;
+import android.webkit.WebResourceResponse;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
@@ -31,6 +42,7 @@ import android.widget.LinearLayout;
 import org.json.JSONObject;
 
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
@@ -51,14 +63,22 @@ public class MainActivity extends Activity {
     private static final String KEY_ZOOM = "zoom";
     private static final int DEFAULT_ZOOM = 80;   // % del tamano de fuente
     private static final long HEARTBEAT_MS = 60000L;
+    // Link fijo del Release: siempre la ultima version del APK.
+    private static final String UPDATE_URL =
+            "https://github.com/lopezdu53/odoo19-enterprise/releases/download/kiosk-latest/tv-kiosk.apk";
 
     private WebView web;
     private View blackout;
+    private View offline;
+    private TextView offlineTitle;
     private DevicePolicyManager dpm;
     private ComponentName adminComp;
     private final Handler handler = new Handler(Looper.getMainLooper());
     private boolean pendingReload = false;
+    private boolean loadFailed = false;
     private long suppressLockUntil = 0L;
+    private long updateDownloadId = -1L;
+    private BroadcastReceiver downloadReceiver;
 
     private final Runnable heartbeat = new Runnable() {
         @Override
@@ -81,7 +101,13 @@ public class MainActivity extends Activity {
         root.addView(web, new FrameLayout.LayoutParams(
                 FrameLayout.LayoutParams.MATCH_PARENT,
                 FrameLayout.LayoutParams.MATCH_PARENT));
-        // Capa negra para el "apagado" programado (encima del WebView).
+        // Pantalla informativa cuando no hay internet o el servidor no responde.
+        offline = buildOfflineView();
+        offline.setVisibility(View.GONE);
+        root.addView(offline, new FrameLayout.LayoutParams(
+                FrameLayout.LayoutParams.MATCH_PARENT,
+                FrameLayout.LayoutParams.MATCH_PARENT));
+        // Capa negra para el "apagado" programado (por encima de todo).
         blackout = new View(this);
         blackout.setBackgroundColor(0xFF000000);
         blackout.setVisibility(View.GONE);
@@ -133,11 +159,40 @@ public class MainActivity extends Activity {
             }
 
             @Override
-            public void onReceivedError(WebView view, WebResourceRequest request, WebResourceError error) {
-                // Al encender puede que la red aun no este lista: reintentar.
-                if (request != null && request.isForMainFrame()) {
-                    scheduleReload();
+            public void onPageStarted(WebView view, String url, Bitmap favicon) {
+                loadFailed = false;
+            }
+
+            @Override
+            public void onPageFinished(WebView view, String url) {
+                // Si cargo bien, ocultar la pantalla de "sin conexion".
+                if (!loadFailed) {
+                    hideOffline();
                 }
+            }
+
+            @Override
+            public void onReceivedError(WebView view, WebResourceRequest request, WebResourceError error) {
+                if (request != null && request.isForMainFrame()) {
+                    onMainFrameFailure("Sin conexion a internet");
+                }
+            }
+
+            @Override
+            public void onReceivedHttpError(WebView view, WebResourceRequest request,
+                                            WebResourceResponse response) {
+                if (request != null && request.isForMainFrame()
+                        && response != null && response.getStatusCode() >= 400) {
+                    onMainFrameFailure("Servidor no disponible");
+                }
+            }
+
+            @Override
+            @SuppressWarnings("deprecation")
+            public void onReceivedError(WebView view, int errorCode, String description,
+                                        String failingUrl) {
+                // Android 5-6 (API < 23): siempre es el marco principal.
+                onMainFrameFailure("Sin conexion a internet");
             }
         });
         web.setWebChromeClient(new WebChromeClient());
@@ -158,6 +213,60 @@ public class MainActivity extends Activity {
                 }
             }
         }, 5000);
+    }
+
+    // ------------------------------------------------------------------
+    // Pantalla informativa "sin conexion"
+    // ------------------------------------------------------------------
+    private View buildOfflineView() {
+        float d = getResources().getDisplayMetrics().density;
+        int pad = (int) (24 * d);
+        LinearLayout ol = new LinearLayout(this);
+        ol.setOrientation(LinearLayout.VERTICAL);
+        ol.setGravity(Gravity.CENTER);
+        ol.setBackgroundColor(0xFF0B1F3A);
+        ol.setPadding(pad, pad, pad, pad);
+
+        TextView icon = new TextView(this);
+        icon.setText("📶");  // antena
+        icon.setTextSize(72);
+        icon.setGravity(Gravity.CENTER);
+
+        offlineTitle = new TextView(this);
+        offlineTitle.setText("Sin conexion");
+        offlineTitle.setTextColor(0xFFFFFFFF);
+        offlineTitle.setTextSize(34);
+        offlineTitle.setGravity(Gravity.CENTER);
+        offlineTitle.setPadding(0, (int) (12 * d), 0, 0);
+
+        TextView sub = new TextView(this);
+        sub.setText("Revisa el internet o el servidor. Reintentando sola...");
+        sub.setTextColor(0xFFB0BEC5);
+        sub.setTextSize(18);
+        sub.setGravity(Gravity.CENTER);
+        sub.setPadding(0, (int) (8 * d), 0, 0);
+
+        ol.addView(icon);
+        ol.addView(offlineTitle);
+        ol.addView(sub);
+        return ol;
+    }
+
+    private void onMainFrameFailure(String title) {
+        loadFailed = true;
+        if (offlineTitle != null) {
+            offlineTitle.setText(title);
+        }
+        if (offline != null) {
+            offline.setVisibility(View.VISIBLE);
+        }
+        scheduleReload();
+    }
+
+    private void hideOffline() {
+        if (offline != null) {
+            offline.setVisibility(View.GONE);
+        }
     }
 
     // ------------------------------------------------------------------
@@ -284,6 +393,114 @@ public class MainActivity extends Activity {
         try {
             dpm.lockNow();
         } catch (Exception ignored) {
+        }
+    }
+
+    // ------------------------------------------------------------------
+    // Auto-actualizacion desde el link del Release
+    // ------------------------------------------------------------------
+    private void startUpdate() {
+        if (Build.VERSION.SDK_INT >= 26 && !getPackageManager().canRequestPackageInstalls()) {
+            new AlertDialog.Builder(this)
+                    .setTitle("Permitir instalar la app")
+                    .setMessage("Activa \"Instalar apps desconocidas\" para TV Kiosk y "
+                            + "vuelve a pulsar Actualizar app.")
+                    .setPositiveButton("Abrir ajustes", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface d, int w) {
+                            try {
+                                startActivity(new Intent(
+                                        Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES,
+                                        Uri.parse("package:" + getPackageName())));
+                            } catch (Exception ignored) {
+                            }
+                        }
+                    })
+                    .setNegativeButton("Cancelar", null)
+                    .show();
+            return;
+        }
+        downloadUpdate();
+    }
+
+    private void downloadUpdate() {
+        try {
+            File dest = new File(getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS),
+                    "tv-kiosk.apk");
+            if (dest.exists()) {
+                dest.delete();
+            }
+            DownloadManager dm = (DownloadManager) getSystemService(DOWNLOAD_SERVICE);
+            DownloadManager.Request req = new DownloadManager.Request(Uri.parse(UPDATE_URL));
+            req.setTitle("Actualizando TV Kiosk");
+            req.setDescription("Descargando nueva version");
+            req.setMimeType("application/vnd.android.package-archive");
+            req.setNotificationVisibility(
+                    DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED);
+            req.setDestinationInExternalFilesDir(this, Environment.DIRECTORY_DOWNLOADS,
+                    "tv-kiosk.apk");
+            registerDownloadReceiver();
+            updateDownloadId = dm.enqueue(req);
+            Toast.makeText(this, "Descargando actualizacion...", Toast.LENGTH_LONG).show();
+        } catch (Exception e) {
+            Toast.makeText(this, "No se pudo iniciar la descarga.", Toast.LENGTH_LONG).show();
+        }
+    }
+
+    private void registerDownloadReceiver() {
+        if (downloadReceiver != null) {
+            return;
+        }
+        downloadReceiver = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context c, Intent i) {
+                long id = i.getLongExtra(DownloadManager.EXTRA_DOWNLOAD_ID, -1L);
+                if (id == updateDownloadId) {
+                    onUpdateDownloaded(id);
+                }
+            }
+        };
+        IntentFilter f = new IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE);
+        if (Build.VERSION.SDK_INT >= 33) {
+            registerReceiver(downloadReceiver, f, Context.RECEIVER_EXPORTED);
+        } else {
+            registerReceiver(downloadReceiver, f);
+        }
+    }
+
+    private void onUpdateDownloaded(long id) {
+        DownloadManager dm = (DownloadManager) getSystemService(DOWNLOAD_SERVICE);
+        Cursor cur = null;
+        try {
+            cur = dm.query(new DownloadManager.Query().setFilterById(id));
+            if (cur != null && cur.moveToFirst()) {
+                int status = cur.getInt(cur.getColumnIndexOrThrow(DownloadManager.COLUMN_STATUS));
+                if (status == DownloadManager.STATUS_SUCCESSFUL) {
+                    installApk(dm.getUriForDownloadedFile(id));
+                } else {
+                    Toast.makeText(this, "Fallo la descarga de la actualizacion.",
+                            Toast.LENGTH_LONG).show();
+                }
+            }
+        } catch (Exception ignored) {
+        } finally {
+            if (cur != null) {
+                cur.close();
+            }
+        }
+    }
+
+    private void installApk(Uri uri) {
+        if (uri == null) {
+            return;
+        }
+        try {
+            Intent i = new Intent(Intent.ACTION_VIEW);
+            i.setDataAndType(uri, "application/vnd.android.package-archive");
+            i.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_ACTIVITY_NEW_TASK);
+            startActivity(i);
+        } catch (Exception e) {
+            Toast.makeText(this, "No se pudo abrir el instalador.", Toast.LENGTH_LONG).show();
         }
     }
 
@@ -416,7 +633,8 @@ public class MainActivity extends Activity {
         int z = prefs().getInt(KEY_ZOOM, DEFAULT_ZOOM);
         final String[] items = {"Recargar", "Reducir fuente (-)",
                 "Aumentar fuente (+)", "Configurar (URL / nombre)",
-                "Permiso de arranque", "Apagado de pantalla (activar)", "Salir"};
+                "Permiso de arranque", "Apagado de pantalla (activar)",
+                "Actualizar app", "Salir"};
         new AlertDialog.Builder(this)
                 .setTitle("TV Kiosk  ·  fuente " + z + "%")
                 .setItems(items, new DialogInterface.OnClickListener() {
@@ -434,6 +652,8 @@ public class MainActivity extends Activity {
                             openOverlaySettings();
                         } else if (which == 5) {
                             requestAdmin();
+                        } else if (which == 6) {
+                            startUpdate();
                         } else {
                             finish();
                         }
@@ -501,6 +721,13 @@ public class MainActivity extends Activity {
     @Override
     protected void onDestroy() {
         stopHeartbeat();
+        if (downloadReceiver != null) {
+            try {
+                unregisterReceiver(downloadReceiver);
+            } catch (Exception ignored) {
+            }
+            downloadReceiver = null;
+        }
         if (web != null) {
             web.destroy();
         }
