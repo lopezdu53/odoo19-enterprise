@@ -1,0 +1,146 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <template id="control_panel" name="TV Control Panel">
+        <html lang="es">
+            <head>
+                <meta charset="utf-8"/>
+                <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no"/>
+                <meta name="apple-mobile-web-app-capable" content="yes"/>
+                <meta name="mobile-web-app-capable" content="yes"/>
+                <title>Control de Pantallas</title>
+                <style>
+                    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+                    body { background: #0c1220; color: #eef2f8; font-family: "Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+                        min-height: 100vh; padding: 12px; -webkit-font-smoothing: antialiased; }
+                    h1 { font-size: 20px; margin-bottom: 10px; }
+                    .devs { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
+                    .dev { display: flex; align-items: center; gap: 7px; background: #131c2e; border: 2px solid #26324a;
+                        border-radius: 999px; padding: 8px 14px; font-size: 15px; font-weight: 700; cursor: pointer; }
+                    .dev.sel { border-color: #4f8cff; background: #1b2b47; }
+                    .dot { width: 12px; height: 12px; border-radius: 50%; background: #d32f2f; flex: 0 0 auto; }
+                    .dot.on { background: #2e7d32; }
+                    .sel-name { font-size: 15px; color: #93a1b8; margin-bottom: 12px; min-height: 20px; }
+                    .sel-name b { color: #eef2f8; }
+                    .pad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; max-width: 380px; margin: 0 auto 16px; }
+                    .pad .sp { visibility: hidden; }
+                    button.k { background: #1b2537; border: 2px solid #2b3a56; color: #eef2f8; border-radius: 14px;
+                        font-size: 16px; font-weight: 800; padding: 18px 6px; cursor: pointer; }
+                    button.k:active { background: #4f8cff; border-color: #4f8cff; }
+                    button.k.ok { background: #234; }
+                    .arrow { font-size: 26px; }
+                    .rows { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; max-width: 380px; margin: 0 auto; }
+                    .rows .wide { grid-column: 1 / -1; }
+                    button.b { border: 0; border-radius: 12px; font-size: 15px; font-weight: 800; padding: 15px 8px;
+                        color: #fff; cursor: pointer; }
+                    button.b:active { filter: brightness(1.25); }
+                    .b-gray { background: #37475f; } .b-blue { background: #1565c0; }
+                    .b-green { background: #2e7d32; } .b-orange { background: #ef6c00; }
+                    .b-purple { background: #6a1b9a; } .b-red { background: #c62828; }
+                    .toast { position: fixed; left: 50%; bottom: 18px; transform: translateX(-50%);
+                        background: #000a; color: #fff; padding: 10px 18px; border-radius: 999px; font-weight: 700;
+                        font-size: 14px; opacity: 0; transition: opacity .2s; pointer-events: none; }
+                    .toast.show { opacity: 1; }
+                    .hint { color: #7a8699; font-size: 12px; text-align: center; margin-top: 18px; line-height: 1.5; }
+                </style>
+            </head>
+            <body>
+                <h1>Control de Pantallas</h1>
+                <div class="devs" id="devs">
+                    <t t-foreach="devices" t-as="d">
+                        <div class="dev" t-att-data-id="d['id']" t-att-data-name="d['name']">
+                            <span t-attf-class="dot#{' on' if d['status'] == 'online' else ''}" t-attf-id="dot-#{d['id']}"/>
+                            <span t-esc="d['name']"/>
+                        </div>
+                    </t>
+                    <t t-if="not devices">
+                        <div class="sel-name">No hay pantallas registradas todavia.</div>
+                    </t>
+                </div>
+
+                <div class="sel-name" id="selName">Elige una pantalla arriba.</div>
+
+                <div class="pad">
+                    <div class="sp"/>
+                    <button class="k" data-cmd="dpad_up"><span class="arrow">▲</span></button>
+                    <div class="sp"/>
+                    <button class="k" data-cmd="dpad_left"><span class="arrow">◀</span></button>
+                    <button class="k ok" data-cmd="dpad_ok">OK</button>
+                    <button class="k" data-cmd="dpad_right"><span class="arrow">▶</span></button>
+                    <div class="sp"/>
+                    <button class="k" data-cmd="dpad_down"><span class="arrow">▼</span></button>
+                    <div class="sp"/>
+                </div>
+
+                <div class="rows">
+                    <button class="b b-gray" data-cmd="back">↩ Atras</button>
+                    <button class="b b-gray" data-cmd="home">⌂ Inicio</button>
+                    <button class="b b-gray" data-cmd="recents">▤ Recientes</button>
+                    <button class="b b-blue" data-cmd="reload">⟳ Recargar</button>
+                    <button class="b b-blue wide" data-cmd="relaunch">↺ Reiniciar app kiosk</button>
+                    <button class="b b-orange" data-cmd="vol_down">🔉 Vol -</button>
+                    <button class="b b-orange" data-cmd="vol_up">🔊 Vol +</button>
+                    <button class="b b-purple" data-cmd="screen_off">🌙 Pantalla OFF</button>
+                    <button class="b b-green" data-cmd="screen_on">☀ Pantalla ON</button>
+                </div>
+
+                <div class="hint">
+                    Las ordenes tardan unos segundos (van por internet).<br/>
+                    Las flechas ▲▼◀▶ y OK requieren Android 13+ en la caja;
+                    Inicio/Atras/Recientes necesitan activar Accesibilidad en la app del kiosco.
+                </div>
+
+                <div class="toast" id="toast"></div>
+
+                <script type="text/javascript">
+                    (function () {
+                        var selId = null, selName = null;
+                        var toastEl = document.getElementById('toast'), toastT = null;
+                        function toast(msg) {
+                            toastEl.textContent = msg; toastEl.classList.add('show');
+                            if (toastT) { clearTimeout(toastT); }
+                            toastT = setTimeout(function () { toastEl.classList.remove('show'); }, 1400);
+                        }
+                        function selectDev(el) {
+                            var prev = document.querySelector('.dev.sel');
+                            if (prev) { prev.classList.remove('sel'); }
+                            el.classList.add('sel');
+                            selId = el.getAttribute('data-id');
+                            selName = el.getAttribute('data-name');
+                            document.getElementById('selName').innerHTML = 'Controlando: &lt;b&gt;' + selName + '&lt;/b&gt;';
+                        }
+                        Array.prototype.forEach.call(document.querySelectorAll('.dev'), function (el) {
+                            el.addEventListener('click', function () { selectDev(el); });
+                        });
+                        function send(cmd) {
+                            if (!selId) { toast('Elige una pantalla primero'); return; }
+                            var fd = new FormData();
+                            fd.append('device_id', selId);
+                            fd.append('command', cmd);
+                            fetch('/tv/ctrl/cmd', { method: 'POST', body: fd, credentials: 'same-origin' })
+                                .then(function (r) { return r.json(); })
+                                .then(function (d) { toast(d.ok ? 'Enviado ✓' : 'Error'); })
+                                .catch(function () { toast('Sin conexion'); });
+                        }
+                        Array.prototype.forEach.call(document.querySelectorAll('button[data-cmd]'), function (b) {
+                            b.addEventListener('click', function () { send(b.getAttribute('data-cmd')); });
+                        });
+                        function refresh() {
+                            fetch('/tv/ctrl/status', { credentials: 'same-origin' })
+                                .then(function (r) { return r.json(); })
+                                .then(function (d) {
+                                    (d.devices || []).forEach(function (dev) {
+                                        var dot = document.getElementById('dot-' + dev.id);
+                                        if (dot) {
+                                            if (dev.status === 'online') { dot.classList.add('on'); }
+                                            else { dot.classList.remove('on'); }
+                                        }
+                                    });
+                                }).catch(function () {});
+                        }
+                        setInterval(refresh, 5000);
+                    })();
+                </script>
+            </body>
+        </html>
+    </template>
+</odoo>

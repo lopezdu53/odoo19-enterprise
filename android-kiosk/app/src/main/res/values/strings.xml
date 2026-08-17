@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">TV Kiosk</string>
+    <string name="accessibility_desc">Permite el control remoto del dispositivo (Inicio, Atras, Recientes y flechas) desde el panel de Odoo.</string>
 </resources>

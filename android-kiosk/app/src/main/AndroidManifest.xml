@@ -43,6 +43,19 @@
             </intent-filter>
         </activity>
 
+        <!-- Servicio de accesibilidad: control remoto de teclas del sistema -->
+        <service
+            android:name=".KioskAccessibilityService"
+            android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.accessibilityservice.AccessibilityService"/>
+            </intent-filter>
+            <meta-data
+                android:name="android.accessibilityservice"
+                android:resource="@xml/accessibility_service"/>
+        </service>
+
         <!-- Administrador de dispositivo: permite apagar (dormir) la pantalla -->
         <receiver
             android:name=".KioskAdminReceiver"

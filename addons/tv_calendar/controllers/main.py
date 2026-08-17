@@ -774,6 +774,64 @@ class TvCalendarController(http.Controller):
         return 'on' if on else 'off'
 
     # ------------------------------------------------------------------
+    # Control remoto: cola de comandos
+    # ------------------------------------------------------------------
+    @http.route('/tv/cmd/<string:access_token>', type='http', auth='public',
+                csrf=False, methods=['GET', 'POST'], sitemap=False)
+    def tv_cmd(self, access_token, device=None, **kw):
+        """Sondeo rapido del kiosco: entrega comandos pendientes y el estado
+        de pantalla, y refresca la ultima conexion del dispositivo."""
+        board = self._board_by_token(access_token)
+        if not board:
+            return self._json({'error': 'not_found'})
+        ip = request.httprequest.remote_addr
+        dev = request.env['tv.calendar.device'].sudo().register_ping(board, device, ip)
+        return self._json({
+            'ok': True,
+            'commands': dev.pop_commands(),
+            'screen': self._screen_state(board),
+        })
+
+    @http.route('/tv/ctrl/cmd', type='http', auth='user', csrf=False,
+                methods=['POST'], sitemap=False)
+    def tv_ctrl_cmd(self, device_id=None, command=None, **kw):
+        """Desde el panel: encola un comando para un dispositivo."""
+        if not device_id or not command:
+            return self._json({'error': 'bad_request'})
+        try:
+            dev = request.env['tv.calendar.device'].browse(int(device_id))
+        except (TypeError, ValueError):
+            return self._json({'error': 'bad_request'})
+        if not dev.exists():
+            return self._json({'error': 'no_device'})
+        dev.enqueue_command(command[:80])
+        return self._json({'ok': True})
+
+    @http.route('/tv/ctrl/status', type='http', auth='user', csrf=False,
+                methods=['GET'], sitemap=False)
+    def tv_ctrl_status(self, **kw):
+        """Estado de todas las pantallas para refrescar el panel."""
+        devices = request.env['tv.calendar.device'].search([])
+        return self._json({'devices': [{
+            'id': d.id,
+            'name': d.name,
+            'board': d.board_id.name or '',
+            'status': d.status,
+        } for d in devices]})
+
+    @http.route('/tv/control', type='http', auth='user', sitemap=False)
+    def tv_control(self, **kw):
+        devices = request.env['tv.calendar.device'].search([])
+        return request.render('tv_calendar.control_panel', {
+            'devices': [{
+                'id': d.id,
+                'name': d.name,
+                'board': d.board_id.name or '',
+                'status': d.status,
+            } for d in devices],
+        })
+
+    # ------------------------------------------------------------------
     # Publicidad
     # ------------------------------------------------------------------
     @staticmethod

@@ -67,4 +67,14 @@
     <menuitem id="menu_tv_calendar_devices" name="Pantallas (dispositivos)"
               parent="menu_tv_calendar_root"
               action="action_tv_calendar_device" sequence="20"/>
+
+    <record id="action_tv_control_panel" model="ir.actions.act_url">
+        <field name="name">Control remoto (movil)</field>
+        <field name="url">/tv/control</field>
+        <field name="target">new</field>
+    </record>
+
+    <menuitem id="menu_tv_control_panel" name="Control remoto"
+              parent="menu_tv_calendar_root"
+              action="action_tv_control_panel" sequence="22"/>
 </odoo>

@@ -1,5 +1,6 @@
 package com.tvcalendar.kiosk;
 
+import android.accessibilityservice.AccessibilityService;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.DownloadManager;
@@ -28,6 +29,7 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 import android.graphics.Bitmap;
+import android.media.AudioManager;
 import android.webkit.WebChromeClient;
 import android.webkit.WebResourceError;
 import android.webkit.WebResourceRequest;
@@ -39,6 +41,7 @@ import android.widget.EditText;
 import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.io.ByteArrayOutputStream;
@@ -63,6 +66,7 @@ public class MainActivity extends Activity {
     private static final String KEY_ZOOM = "zoom";
     private static final int DEFAULT_ZOOM = 80;   // % del tamano de fuente
     private static final long HEARTBEAT_MS = 60000L;
+    private static final long CMD_POLL_MS = 2500L;   // sondeo de comandos
     // Link fijo del Release: siempre la ultima version del APK.
     private static final String UPDATE_URL =
             "https://github.com/lopezdu53/odoo19-enterprise/releases/download/kiosk-latest/tv-kiosk.apk";
@@ -85,6 +89,14 @@ public class MainActivity extends Activity {
         public void run() {
             sendPing();
             handler.postDelayed(this, HEARTBEAT_MS);
+        }
+    };
+
+    private final Runnable cmdPoll = new Runnable() {
+        @Override
+        public void run() {
+            pollCommands();
+            handler.postDelayed(this, CMD_POLL_MS);
         }
     };
 
@@ -281,28 +293,28 @@ public class MainActivity extends Activity {
         handler.removeCallbacks(heartbeat);
     }
 
-    /** Deriva la URL /tv/ping/<token> a partir de la URL del tablero. */
-    private String pingUrlFor(String boardUrl) {
+    /** Deriva https://host/tv/<path>/<token> a partir de la URL del tablero. */
+    private String endpoint(String boardUrl, String path) {
         try {
             URL u = new URL(boardUrl);
-            String path = u.getPath();
-            if (path == null) {
+            String p = u.getPath();
+            if (p == null) {
                 return null;
             }
-            path = path.replaceAll("/+$", "");
-            String[] parts = path.split("/");
+            p = p.replaceAll("/+$", "");
+            String[] parts = p.split("/");
             String token = parts.length > 0 ? parts[parts.length - 1] : "";
             if (token.isEmpty()) {
                 return null;
             }
-            return u.getProtocol() + "://" + u.getAuthority() + "/tv/ping/" + token;
+            return u.getProtocol() + "://" + u.getAuthority() + "/tv/" + path + "/" + token;
         } catch (Exception e) {
             return null;
         }
     }
 
     private void sendPing() {
-        final String ping = pingUrlFor(prefs().getString(KEY_URL, ""));
+        final String ping = endpoint(prefs().getString(KEY_URL, ""), "ping");
         final String device = prefs().getString(KEY_DEVICE, "");
         if (ping == null) {
             return;
@@ -344,8 +356,7 @@ public class MainActivity extends Activity {
         }).start();
     }
 
-    /** Lee el cuerpo JSON del latido y devuelve "on"/"off" (o null). */
-    private String readScreen(InputStream in) {
+    private String readBody(InputStream in) {
         if (in == null) {
             return null;
         }
@@ -356,12 +367,174 @@ public class MainActivity extends Activity {
             while ((n = in.read(buf)) != -1) {
                 bos.write(buf, 0, n);
             }
-            JSONObject o = new JSONObject(bos.toString("UTF-8"));
+            return bos.toString("UTF-8");
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    /** Lee el cuerpo del latido y devuelve el campo "screen" (o null). */
+    private String readScreen(InputStream in) {
+        try {
+            JSONObject o = new JSONObject(readBody(in));
             String s = o.optString("screen", "");
             return s.isEmpty() ? null : s;
         } catch (Exception e) {
             return null;
         }
+    }
+
+    // ------------------------------------------------------------------
+    // Control remoto: sondeo y ejecucion de comandos
+    // ------------------------------------------------------------------
+    private void startCmdPoll() {
+        handler.removeCallbacks(cmdPoll);
+        handler.post(cmdPoll);
+    }
+
+    private void stopCmdPoll() {
+        handler.removeCallbacks(cmdPoll);
+    }
+
+    private void pollCommands() {
+        final String base = endpoint(prefs().getString(KEY_URL, ""), "cmd");
+        final String device = prefs().getString(KEY_DEVICE, "");
+        if (base == null) {
+            return;
+        }
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                HttpURLConnection c = null;
+                try {
+                    String url = base + "?device=" + URLEncoder.encode(device, "UTF-8");
+                    c = (HttpURLConnection) new URL(url).openConnection();
+                    c.setConnectTimeout(8000);
+                    c.setReadTimeout(8000);
+                    c.getResponseCode();
+                    JSONObject o = new JSONObject(readBody(c.getInputStream()));
+                    final String screen = o.optString("screen", "");
+                    final JSONArray cmds = o.optJSONArray("commands");
+                    handler.post(new Runnable() {
+                        @Override
+                        public void run() {
+                            if (!screen.isEmpty()) {
+                                applyScreen(screen);
+                            }
+                            if (cmds != null) {
+                                for (int i = 0; i < cmds.length(); i++) {
+                                    executeCommand(cmds.optString(i));
+                                }
+                            }
+                        }
+                    });
+                } catch (Exception ignored) {
+                } finally {
+                    if (c != null) {
+                        c.disconnect();
+                    }
+                }
+            }
+        }).start();
+    }
+
+    private void executeCommand(String cmd) {
+        if (cmd == null || cmd.isEmpty()) {
+            return;
+        }
+        if (cmd.startsWith("seturl:")) {
+            String u = cmd.substring(7).trim();
+            if (!u.isEmpty()) {
+                if (!u.startsWith("http://") && !u.startsWith("https://")) {
+                    u = "https://" + u;
+                }
+                prefs().edit().putString(KEY_URL, u).apply();
+                loadFailed = false;
+                web.loadUrl(u);
+            }
+            return;
+        }
+        switch (cmd) {
+            case "reload":
+                loadFailed = false;
+                web.reload();
+                break;
+            case "relaunch":
+                recreate();
+                break;
+            case "screen_on":
+                if (blackout != null) {
+                    blackout.setVisibility(View.GONE);
+                }
+                break;
+            case "screen_off":
+                if (isAdminActive()) {
+                    lockScreen();
+                } else if (blackout != null) {
+                    blackout.setVisibility(View.VISIBLE);
+                }
+                break;
+            case "home":
+                performAcc(AccessibilityService.GLOBAL_ACTION_HOME);
+                break;
+            case "back":
+                performAcc(AccessibilityService.GLOBAL_ACTION_BACK);
+                break;
+            case "recents":
+                performAcc(AccessibilityService.GLOBAL_ACTION_RECENTS);
+                break;
+            case "dpad_up":
+                performAcc(AccessibilityService.GLOBAL_ACTION_DPAD_UP);
+                break;
+            case "dpad_down":
+                performAcc(AccessibilityService.GLOBAL_ACTION_DPAD_DOWN);
+                break;
+            case "dpad_left":
+                performAcc(AccessibilityService.GLOBAL_ACTION_DPAD_LEFT);
+                break;
+            case "dpad_right":
+                performAcc(AccessibilityService.GLOBAL_ACTION_DPAD_RIGHT);
+                break;
+            case "dpad_ok":
+                performAcc(AccessibilityService.GLOBAL_ACTION_DPAD_CENTER);
+                break;
+            case "vol_up":
+                adjustVolume(AudioManager.ADJUST_RAISE);
+                break;
+            case "vol_down":
+                adjustVolume(AudioManager.ADJUST_LOWER);
+                break;
+            default:
+                break;
+        }
+    }
+
+    private void performAcc(int action) {
+        boolean ok = KioskAccessibilityService.perform(action);
+        if (!ok && !KioskAccessibilityService.isRunning()) {
+            Toast.makeText(this, "Activa Accesibilidad para el control remoto (menu).",
+                    Toast.LENGTH_LONG).show();
+        }
+    }
+
+    private void adjustVolume(int direction) {
+        try {
+            AudioManager am = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
+            if (am != null) {
+                am.adjustStreamVolume(AudioManager.STREAM_MUSIC, direction,
+                        AudioManager.FLAG_SHOW_UI);
+            }
+        } catch (Exception ignored) {
+        }
+    }
+
+    private void openAccessibilitySettings() {
+        try {
+            startActivity(new Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS));
+        } catch (Exception ignored) {
+        }
+        Toast.makeText(this, "Activa 'TV Kiosk' en la lista de Accesibilidad.",
+                Toast.LENGTH_LONG).show();
     }
 
     /** Aplica el estado de pantalla del horario configurado en Odoo. */
@@ -561,6 +734,7 @@ public class MainActivity extends Activity {
                     prefs().edit().putString(KEY_URL, url).putString(KEY_DEVICE, dev).apply();
                     web.loadUrl(url);
                     startHeartbeat();
+                    startCmdPoll();
                     if (firstRun) {
                         maybeRequestOverlay();
                     }
@@ -634,7 +808,7 @@ public class MainActivity extends Activity {
         final String[] items = {"Recargar", "Reducir fuente (-)",
                 "Aumentar fuente (+)", "Configurar (URL / nombre)",
                 "Permiso de arranque", "Apagado de pantalla (activar)",
-                "Actualizar app", "Salir"};
+                "Control remoto (accesibilidad)", "Actualizar app", "Salir"};
         new AlertDialog.Builder(this)
                 .setTitle("TV Kiosk  ·  fuente " + z + "%")
                 .setItems(items, new DialogInterface.OnClickListener() {
@@ -653,6 +827,8 @@ public class MainActivity extends Activity {
                         } else if (which == 5) {
                             requestAdmin();
                         } else if (which == 6) {
+                            openAccessibilitySettings();
+                        } else if (which == 7) {
                             startUpdate();
                         } else {
                             finish();
@@ -709,6 +885,7 @@ public class MainActivity extends Activity {
         applyImmersive();
         if (!prefs().getString(KEY_URL, "").trim().isEmpty()) {
             startHeartbeat();
+            startCmdPoll();
         }
     }
 
@@ -716,11 +893,13 @@ public class MainActivity extends Activity {
     protected void onPause() {
         super.onPause();
         stopHeartbeat();
+        stopCmdPoll();
     }
 
     @Override
     protected void onDestroy() {
         stopHeartbeat();
+        stopCmdPoll();
         if (downloadReceiver != null) {
             try {
                 unregisterReceiver(downloadReceiver);

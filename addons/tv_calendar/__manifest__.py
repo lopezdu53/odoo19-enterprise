@@ -34,6 +34,7 @@ Caracteristicas
         'views/tv_calendar_project_views.xml',
         'views/tv_calendar_component_views.xml',
         'views/tv_calendar_device_views.xml',
+        'templates/control_panel.xml',
         'templates/kiosk_templates.xml',
         'data/demo_data.xml',
     ],

@@ -15,6 +15,9 @@ class TvCalendarDevice(models.Model):
         'tv.calendar.board', string='Tablero', ondelete='cascade', index=True)
     last_seen = fields.Datetime(string='Ultima conexion')
     last_ip = fields.Char(string='Ultima IP')
+    command_queue = fields.Char(
+        string='Comandos pendientes', copy=False,
+        help="Comandos en cola para el dispositivo (separados por '|').")
     status = fields.Selection(
         [('online', 'En linea'), ('offline', 'Desconectado')],
         string='Estado', compute='_compute_status', search='_search_status')
@@ -45,18 +48,43 @@ class TvCalendarDevice(models.Model):
             return [('id', 'in', online_ids)]
         return [('id', 'not in', online_ids)]
 
+    def enqueue_command(self, command):
+        """Agrega un comando a la cola del dispositivo."""
+        self.ensure_one()
+        queue = self.command_queue or ''
+        parts = [c for c in queue.split('|') if c]
+        parts.append(command)
+        # Evitar que la cola crezca sin limite si el dispositivo esta offline.
+        self.command_queue = '|'.join(parts[-20:])
+
+    def pop_commands(self):
+        """Devuelve y vacia los comandos pendientes."""
+        self.ensure_one()
+        queue = self.command_queue or ''
+        if queue:
+            self.command_queue = False
+        return [c for c in queue.split('|') if c]
+
     @api.model
     def register_ping(self, board, name, ip=None):
-        """Crea o actualiza el dispositivo y marca su ultima conexion."""
+        """Crea o actualiza el dispositivo y marca su ultima conexion.
+
+        El sondeo de comandos llega cada pocos segundos, asi que solo
+        reescribimos 'last_seen' cada 20 s para no saturar la base de datos."""
         name = (name or 'Sin nombre').strip()[:120]
+        now = fields.Datetime.now()
         device = self.search(
             [('board_id', '=', board.id), ('name', '=', name)], limit=1)
-        vals = {'last_seen': fields.Datetime.now()}
-        if ip:
-            vals['last_ip'] = ip
         if device:
-            device.write(vals)
+            recent = device.last_seen and (now - device.last_seen).total_seconds() < 20
+            if not (recent and (not ip or ip == device.last_ip)):
+                vals = {'last_seen': now}
+                if ip:
+                    vals['last_ip'] = ip
+                device.write(vals)
         else:
-            vals.update({'name': name, 'board_id': board.id})
+            vals = {'name': name, 'board_id': board.id, 'last_seen': now}
+            if ip:
+                vals['last_ip'] = ip
             device = self.create(vals)
         return device
