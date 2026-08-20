@@ -46,6 +46,7 @@ class TvCalendarBoard(models.Model):
             ('mecanizado', 'Mecanizado'),
             ('electric', 'Electricos con Inventario'),
             ('component_orders', 'Pedidos de Componentes'),
+            ('ventas', 'Ventas (CRM)'),
             ('ad', 'Publicidad'),
         ],
         string='Tipo de plantilla', default='schedule', required=True,
@@ -136,6 +137,17 @@ class TvCalendarBoard(models.Model):
     power_weekend_off = fields.Boolean(
         string='Apagar sabado y domingo', default=True,
         help="Si esta activo, el fin de semana la pantalla permanece en negro.")
+
+    # --- Plantilla Ventas (CRM) ---
+    crm_stage_new_id = fields.Many2one(
+        'crm.stage', string='Etapa "Nuevos"',
+        help="Etapa del CRM para la columna Nuevos. Vacio = se busca por nombre.")
+    crm_stage_proposal_id = fields.Many2one(
+        'crm.stage', string='Etapa "Propuesta"',
+        help="Etapa del CRM para la columna Propuesta. Vacio = se busca por nombre.")
+    crm_stage_negotiation_id = fields.Many2one(
+        'crm.stage', string='Etapa "Negociacion"',
+        help="Etapa del CRM para la columna Negociacion. Vacio = se busca por nombre.")
 
     # --- Plantilla Publicidad ---
     youtube_url = fields.Char(

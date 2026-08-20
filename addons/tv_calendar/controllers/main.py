@@ -104,6 +104,10 @@ class TvCalendarController(http.Controller):
             common.update(self._component_orders_values(board, today))
             return self._render(board, 'tv_calendar.kiosk_component_orders', common)
 
+        if board.template_type == 'ventas':
+            common.update(self._ventas_values(board))
+            return self._render(board, 'tv_calendar.kiosk_ventas', common)
+
         # --- Cronograma principal (normal o dia extendido) ---
         if board.template_type == 'extended':
             common.update(self._extended_values(board, today))
@@ -624,6 +628,63 @@ class TvCalendarController(http.Controller):
     @staticmethod
     def _dt_ts(dt):
         return int(dt.replace(tzinfo=timezone.utc).timestamp()) if dt else 0
+
+    # ------------------------------------------------------------------
+    # Ventas (CRM): oportunidades por etapa
+    # ------------------------------------------------------------------
+    def _ventas_values(self, board):
+        Stage = request.env['crm.stage'].sudo()
+        Lead = request.env['crm.lead'].sudo()
+        all_stages = Stage.search([])
+
+        def match(keys):
+            for s in all_stages:
+                low = (s.name or '').lower()
+                if any(k in low for k in keys):
+                    return s
+            return Stage.browse()
+
+        columns_def = [
+            ('Nuevos', board.crm_stage_new_id, ['nuevo', 'new']),
+            ('Propuesta', board.crm_stage_proposal_id, ['propuesta', 'proposition', 'proposal']),
+            ('Negociacion', board.crm_stage_negotiation_id, ['negociaci', 'negotiat']),
+        ]
+        columns = []
+        for label, configured, keys in columns_def:
+            stage = configured or match(keys)
+            leads = Lead.browse()
+            if stage:
+                leads = Lead.search(
+                    [('type', '=', 'opportunity'), ('stage_id', '=', stage.id)],
+                    order='priority desc, id desc', limit=40)
+            columns.append({
+                'label': label,
+                'count': len(leads),
+                'leads': [self._lead_vals(l) for l in leads],
+            })
+        return {'columns': columns}
+
+    @staticmethod
+    def _lead_vals(lead):
+        partner = lead.partner_id
+        contact = (lead.contact_name or (partner.name if partner else '')
+                   or lead.partner_name or '')
+        email = lead.email_from or (partner.email if partner else '') or ''
+        phone = lead.phone or lead.mobile or (partner.phone if partner else '') or ''
+        desc = lead.description or ''
+        desc_text = html2plaintext(desc) if desc else ''
+        symbol = (lead.company_currency.symbol
+                  if lead.company_currency else '$') or '$'
+        initial = (contact or lead.name or '?').strip()[:1].upper()
+        return {
+            'name': lead.name or '',
+            'contact': contact,
+            'email': email,
+            'phone': phone,
+            'description': desc_text,
+            'value': '%s %s' % (symbol, '{:,.0f}'.format(lead.expected_revenue or 0.0)),
+            'initial': initial,
+        }
 
     # ------------------------------------------------------------------
     # Endpoints interactivos (JSON) para el TV de electricos / pedidos

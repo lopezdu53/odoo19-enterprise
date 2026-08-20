@@ -24,7 +24,7 @@ Caracteristicas
     'author': 'Odoo TV Calendar',
     'website': 'https://github.com/lopezdu53/odoo19-enterprise',
     'license': 'LGPL-3',
-    'depends': ['base', 'mail', 'hr', 'product'],
+    'depends': ['base', 'mail', 'hr', 'product', 'crm'],
     'data': [
         'security/tv_calendar_security.xml',
         'security/ir.model.access.csv',
@@ -35,6 +35,7 @@ Caracteristicas
         'views/tv_calendar_component_views.xml',
         'views/tv_calendar_device_views.xml',
         'templates/control_panel.xml',
+        'templates/ventas_templates.xml',
         'templates/kiosk_templates.xml',
         'data/demo_data.xml',
     ],

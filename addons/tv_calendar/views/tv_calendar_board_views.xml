@@ -115,6 +115,18 @@
                                options="{'no_create': True}"/>
                     </group>
 
+                    <!-- Ventas (CRM) -->
+                    <group string="Ventas: etapas del CRM (opcional)"
+                           invisible="template_type != 'ventas'">
+                        <field name="crm_stage_new_id" options="{'no_create': True}"/>
+                        <field name="crm_stage_proposal_id" options="{'no_create': True}"/>
+                        <field name="crm_stage_negotiation_id" options="{'no_create': True}"/>
+                        <div colspan="2" class="text-muted">
+                            Si dejas las etapas vacias, se buscan por nombre
+                            (Nuevos / Propuesta / Negociacion).
+                        </div>
+                    </group>
+
                     <!-- Pedidos de Componentes -->
                     <group string="Origen de solicitudes"
                            invisible="template_type != 'component_orders'">

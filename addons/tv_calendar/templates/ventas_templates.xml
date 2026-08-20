@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <template id="kiosk_ventas" name="TV Ventas (CRM)">
+        <html t-att-lang="'es'">
+            <head>
+                <meta charset="utf-8"/>
+                <meta name="viewport" content="width=device-width, initial-scale=1"/>
+                <t t-if="refresh_interval and refresh_interval &gt; 0">
+                    <meta http-equiv="refresh" t-att-content="refresh_interval"/>
+                </t>
+                <title t-esc="board.name"/>
+                <style>
+                    :root { --bg:#eef1f5; --panel:#fff; --card:#f4f6fa; --ink:#1a2233; --muted:#7a8699;
+                        --line:#d5dbe4; --header-bg:#0b1f3a; --accent:#0b57d0; --green:#1e8e3e; }
+                    body.theme-dark { --bg:#0c1220; --panel:#131c2e; --card:#1a2438; --ink:#eef2f8; --muted:#8a97ad;
+                        --line:#26324a; --header-bg:#050b16; --accent:#4f8cff; --green:#4caf50; }
+                    * { box-sizing:border-box; margin:0; padding:0; }
+                    html, body { height:100%; }
+                    body { background:var(--bg); color:var(--ink); height:100vh; display:flex; flex-direction:column;
+                        overflow:hidden; font-family:"Segoe UI",Roboto,Helvetica,Arial,sans-serif; -webkit-font-smoothing:antialiased; }
+                    header.v-header { background:var(--header-bg); color:#fff; display:flex; align-items:center;
+                        justify-content:space-between; padding:1.1vh 2vw; flex:0 0 auto; }
+                    .v-title .t1 { font-size:clamp(20px,2.4vw,44px); font-weight:800; }
+                    .v-title .t2 { font-size:clamp(12px,1.3vw,22px); opacity:.8; margin-left:1vw; }
+                    .v-clock { font-size:clamp(18px,2vw,40px); font-weight:800; white-space:nowrap; font-variant-numeric:tabular-nums; }
+
+                    .v-cols { flex:1 1 auto; display:flex; min-height:0; padding:6px; }
+                    .v-col { flex:1 1 0; min-width:0; display:flex; flex-direction:column; background:var(--panel);
+                        border:1px solid var(--line); border-radius:10px; overflow:hidden; margin-right:6px; }
+                    .v-col:last-child { margin-right:0; }
+                    .v-cap { color:#fff; padding:.9vh 1.2vw; flex:0 0 auto; display:flex; align-items:center;
+                        justify-content:space-between; font-size:clamp(15px,1.8vw,32px); font-weight:800; letter-spacing:.3px; }
+                    .v-cap.c0 { background:#1565c0; } .v-cap.c1 { background:#6a1b9a; } .v-cap.c2 { background:#ef6c00; }
+                    .v-cap .cnt { background:rgba(255,255,255,.25); border-radius:999px; padding:.1vh .8vw;
+                        font-size:clamp(12px,1.3vw,22px); min-width:1.8em; text-align:center; }
+                    .v-list { flex:1 1 auto; overflow:auto; padding:1vh 1vw; }
+                    .v-card { background:var(--card); border:1px solid var(--line); border-left:6px solid var(--accent);
+                        border-radius:10px; padding:1vh 1.1vw; margin-bottom:1vh; }
+                    .v-card:last-child { margin-bottom:0; }
+                    .v-name { font-size:clamp(14px,1.5vw,26px); font-weight:800; line-height:1.15; }
+                    .v-who { display:flex; align-items:center; margin-top:.5vh; }
+                    .v-ava { width:2em; height:2em; border-radius:50%; background:var(--accent); color:#fff; font-weight:800;
+                        display:flex; align-items:center; justify-content:center; font-size:clamp(11px,1.1vw,18px); flex:0 0 auto; margin-right:.6vw; }
+                    .v-contact { min-width:0; }
+                    .v-contact .nm { font-size:clamp(12px,1.25vw,20px); font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+                    .v-meta { font-size:clamp(10px,1vw,16px); color:var(--muted); font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+                    .v-desc { font-size:clamp(11px,1.1vw,18px); color:var(--muted); margin-top:.5vh; line-height:1.3;
+                        overflow:hidden; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; }
+                    .v-val { font-size:clamp(14px,1.5vw,26px); font-weight:800; color:var(--green); margin-top:.6vh; }
+                    .v-empty { color:var(--muted); text-align:center; padding:3vh 1vw; font-size:clamp(13px,1.4vw,24px); }
+                </style>
+            </head>
+            <body t-attf-class="theme-#{theme}">
+                <header class="v-header">
+                    <div class="v-title">
+                        <span class="t1">Ventas</span>
+                        <span class="t2" t-esc="board.name"/>
+                    </div>
+                    <span class="v-clock" id="tvc-clock" t-esc="now_label"/>
+                </header>
+                <div class="v-cols">
+                    <t t-foreach="columns" t-as="col">
+                        <div class="v-col">
+                            <div t-attf-class="v-cap c#{col_index}">
+                                <span t-esc="col['label']"/>
+                                <span class="cnt" t-esc="col['count']"/>
+                            </div>
+                            <div class="v-list">
+                                <t t-foreach="col['leads']" t-as="lead">
+                                    <div class="v-card">
+                                        <div class="v-name" t-esc="lead['name']"/>
+                                        <div class="v-who">
+                                            <div class="v-ava" t-esc="lead['initial']"/>
+                                            <div class="v-contact">
+                                                <t t-if="lead['contact']">
+                                                    <div class="nm" t-esc="lead['contact']"/>
+                                                </t>
+                                                <t t-if="lead['email']">
+                                                    <div class="v-meta" t-esc="lead['email']"/>
+                                                </t>
+                                                <t t-if="lead['phone']">
+                                                    <div class="v-meta" t-esc="lead['phone']"/>
+                                                </t>
+                                            </div>
+                                        </div>
+                                        <t t-if="lead['description']">
+                                            <div class="v-desc" t-esc="lead['description']"/>
+                                        </t>
+                                        <div class="v-val" t-esc="lead['value']"/>
+                                    </div>
+                                </t>
+                                <t t-if="not col['leads']">
+                                    <div class="v-empty">Sin oportunidades.</div>
+                                </t>
+                            </div>
+                        </div>
+                    </t>
+                </div>
+                <script type="text/javascript">
+                    (function () {
+                        var el = document.getElementById('tvc-clock');
+                        if (!el) { return; }
+                        function pad(n) { return (n &lt; 10 ? '0' : '') + n; }
+                        function tick() {
+                            var d = new Date(); var h = d.getHours(); var ap = h &lt; 12 ? 'am' : 'pm';
+                            var h12 = h % 12; if (h12 === 0) { h12 = 12; }
+                            el.textContent = pad(d.getDate()) + '/' + pad(d.getMonth() + 1) + '/' + d.getFullYear() +
+                                ' ' + pad(h12) + ':' + pad(d.getMinutes()) + ' ' + ap;
+                        }
+                        tick(); setInterval(tick, 15000);
+                    })();
+                </script>
+            </body>
+        </html>
+    </template>
+</odoo>
