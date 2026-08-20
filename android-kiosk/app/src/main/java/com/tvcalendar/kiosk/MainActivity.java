@@ -582,7 +582,7 @@ public class MainActivity extends Activity {
     // ------------------------------------------------------------------
     private void startUpdate() {
         if (Build.VERSION.SDK_INT >= 26 && !getPackageManager().canRequestPackageInstalls()) {
-            new AlertDialog.Builder(this)
+            showRotated(new AlertDialog.Builder(this)
                     .setTitle("Permitir instalar la app")
                     .setMessage("Activa \"Instalar apps desconocidas\" para TV Kiosk y "
                             + "vuelve a pulsar Actualizar app.")
@@ -597,8 +597,7 @@ public class MainActivity extends Activity {
                             }
                         }
                     })
-                    .setNegativeButton("Cancelar", null)
-                    .show();
+                    .setNegativeButton("Cancelar", null));
             return;
         }
         downloadUpdate();
@@ -687,11 +686,10 @@ public class MainActivity extends Activity {
 
     private void requestAdmin() {
         if (isAdminActive()) {
-            new AlertDialog.Builder(this)
+            showRotated(new AlertDialog.Builder(this)
                     .setTitle("Apagado de pantalla")
                     .setMessage("El apagado real de pantalla ya esta activado.")
-                    .setPositiveButton("OK", null)
-                    .show();
+                    .setPositiveButton("OK", null));
             return;
         }
         try {
@@ -752,7 +750,7 @@ public class MainActivity extends Activity {
         if (!firstRun) {
             b.setNegativeButton("Cancelar", null);
         }
-        b.show();
+        showRotated(b);
     }
 
     // ------------------------------------------------------------------
@@ -763,7 +761,7 @@ public class MainActivity extends Activity {
                 && !Settings.canDrawOverlays(this)
                 && !prefs().getBoolean(KEY_OVERLAY_ASKED, false)) {
             prefs().edit().putBoolean(KEY_OVERLAY_ASKED, true).apply();
-            new AlertDialog.Builder(this)
+            showRotated(new AlertDialog.Builder(this)
                     .setTitle("Permitir arranque automatico")
                     .setMessage("Para que la pantalla se abra sola al encender, activa "
                             + "\"Mostrar sobre otras apps\" (o \"Aparecer encima\") para TV Kiosk.")
@@ -773,8 +771,7 @@ public class MainActivity extends Activity {
                             openOverlaySettings();
                         }
                     })
-                    .setNegativeButton("Ahora no", null)
-                    .show();
+                    .setNegativeButton("Ahora no", null));
         }
     }
 
@@ -839,6 +836,16 @@ public class MainActivity extends Activity {
         Toast.makeText(this, "Rotacion: " + deg + "°", Toast.LENGTH_SHORT).show();
     }
 
+    /** Muestra un dialogo girado igual que la pantalla (para monitor vertical). */
+    private void showRotated(AlertDialog.Builder builder) {
+        AlertDialog dlg = builder.create();
+        dlg.show();
+        int deg = prefs().getInt(KEY_ROTATION, 0);
+        if (deg != 0 && dlg.getWindow() != null) {
+            dlg.getWindow().getDecorView().setRotation(deg);
+        }
+    }
+
     // ------------------------------------------------------------------
     // Menu (boton atras / menu)
     // ------------------------------------------------------------------
@@ -849,7 +856,7 @@ public class MainActivity extends Activity {
                 "Configurar (URL / nombre)",
                 "Permiso de arranque", "Apagado de pantalla (activar)",
                 "Control remoto (accesibilidad)", "Actualizar app", "Salir"};
-        new AlertDialog.Builder(this)
+        showRotated(new AlertDialog.Builder(this)
                 .setTitle("TV Kiosk  ·  fuente " + z + "%")
                 .setItems(items, new DialogInterface.OnClickListener() {
                     @Override
@@ -876,8 +883,7 @@ public class MainActivity extends Activity {
                             finish();
                         }
                     }
-                })
-                .show();
+                }));
     }
 
     @Override
