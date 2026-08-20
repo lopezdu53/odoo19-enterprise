@@ -45,7 +45,8 @@
                     .v-contact { min-width:0; }
                     .v-contact .nm { font-size:clamp(10px,1vw,16px); font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
                     .v-meta { font-size:clamp(9px,.85vw,13px); color:var(--muted); font-weight:600; line-height:1.2; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-                    .v-desc { display:none; }
+                    .v-desc { font-size:clamp(9px,.92vw,15px); color:var(--muted); margin-top:.3vh; line-height:1.25;
+                        overflow:hidden; display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; }
                     .v-val { font-size:clamp(11px,1.15vw,18px); font-weight:800; color:var(--green); margin-top:.2vh; }
                     .v-empty { color:var(--muted); text-align:center; padding:3vh 1vw; font-size:clamp(13px,1.4vw,24px); }
                 </style>
