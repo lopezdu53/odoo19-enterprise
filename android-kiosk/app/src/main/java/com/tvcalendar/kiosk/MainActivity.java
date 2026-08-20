@@ -64,6 +64,7 @@ public class MainActivity extends Activity {
     private static final String KEY_DEVICE = "device";
     private static final String KEY_OVERLAY_ASKED = "overlay_asked";
     private static final String KEY_ZOOM = "zoom";
+    private static final String KEY_ROTATION = "rotation";  // 0/90/180/270
     private static final int DEFAULT_ZOOM = 80;   // % del tamano de fuente
     private static final long HEARTBEAT_MS = 60000L;
     private static final long CMD_POLL_MS = 2500L;   // sondeo de comandos
@@ -72,6 +73,7 @@ public class MainActivity extends Activity {
             "https://github.com/lopezdu53/odoo19-enterprise/releases/download/kiosk-latest/tv-kiosk.apk";
 
     private WebView web;
+    private FrameLayout stage;
     private View blackout;
     private View offline;
     private TextView offlineTitle;
@@ -109,24 +111,30 @@ public class MainActivity extends Activity {
         adminComp = new ComponentName(this, KioskAdminReceiver.class);
 
         FrameLayout root = new FrameLayout(this);
+        // "stage" contiene todo y se puede girar (monitor en vertical).
+        stage = new FrameLayout(this);
         web = new WebView(this);
-        root.addView(web, new FrameLayout.LayoutParams(
+        stage.addView(web, new FrameLayout.LayoutParams(
                 FrameLayout.LayoutParams.MATCH_PARENT,
                 FrameLayout.LayoutParams.MATCH_PARENT));
         // Pantalla informativa cuando no hay internet o el servidor no responde.
         offline = buildOfflineView();
         offline.setVisibility(View.GONE);
-        root.addView(offline, new FrameLayout.LayoutParams(
+        stage.addView(offline, new FrameLayout.LayoutParams(
                 FrameLayout.LayoutParams.MATCH_PARENT,
                 FrameLayout.LayoutParams.MATCH_PARENT));
         // Capa negra para el "apagado" programado (por encima de todo).
         blackout = new View(this);
         blackout.setBackgroundColor(0xFF000000);
         blackout.setVisibility(View.GONE);
-        root.addView(blackout, new FrameLayout.LayoutParams(
+        stage.addView(blackout, new FrameLayout.LayoutParams(
+                FrameLayout.LayoutParams.MATCH_PARENT,
+                FrameLayout.LayoutParams.MATCH_PARENT));
+        root.addView(stage, new FrameLayout.LayoutParams(
                 FrameLayout.LayoutParams.MATCH_PARENT,
                 FrameLayout.LayoutParams.MATCH_PARENT));
         setContentView(root);
+        applyRotation();
 
         configureWeb();
 
@@ -801,12 +809,44 @@ public class MainActivity extends Activity {
     }
 
     // ------------------------------------------------------------------
+    // Rotacion de pantalla (monitor en vertical / portrait)
+    // ------------------------------------------------------------------
+    private void applyRotation() {
+        if (stage == null) {
+            return;
+        }
+        int deg = prefs().getInt(KEY_ROTATION, 0);
+        int w = getResources().getDisplayMetrics().widthPixels;
+        int h = getResources().getDisplayMetrics().heightPixels;
+        FrameLayout.LayoutParams lp;
+        if (deg == 90 || deg == 270) {
+            // Se intercambian ancho y alto: el contenido queda en vertical
+            // y, al girarlo, llena la pantalla horizontal del dispositivo.
+            lp = new FrameLayout.LayoutParams(h, w);
+        } else {
+            lp = new FrameLayout.LayoutParams(w, h);
+        }
+        lp.gravity = Gravity.CENTER;
+        stage.setLayoutParams(lp);
+        stage.setRotation(deg);
+    }
+
+    private void cycleRotation() {
+        int deg = prefs().getInt(KEY_ROTATION, 0);
+        deg = (deg + 90) % 360;
+        prefs().edit().putInt(KEY_ROTATION, deg).apply();
+        applyRotation();
+        Toast.makeText(this, "Rotacion: " + deg + "°", Toast.LENGTH_SHORT).show();
+    }
+
+    // ------------------------------------------------------------------
     // Menu (boton atras / menu)
     // ------------------------------------------------------------------
     private void showMenu() {
         int z = prefs().getInt(KEY_ZOOM, DEFAULT_ZOOM);
         final String[] items = {"Recargar", "Reducir fuente (-)",
-                "Aumentar fuente (+)", "Configurar (URL / nombre)",
+                "Aumentar fuente (+)", "Girar pantalla (vertical/horizontal)",
+                "Configurar (URL / nombre)",
                 "Permiso de arranque", "Apagado de pantalla (activar)",
                 "Control remoto (accesibilidad)", "Actualizar app", "Salir"};
         new AlertDialog.Builder(this)
@@ -821,14 +861,16 @@ public class MainActivity extends Activity {
                         } else if (which == 2) {
                             changeZoom(10);
                         } else if (which == 3) {
-                            promptForConfig(false);
+                            cycleRotation();
                         } else if (which == 4) {
-                            openOverlaySettings();
+                            promptForConfig(false);
                         } else if (which == 5) {
-                            requestAdmin();
+                            openOverlaySettings();
                         } else if (which == 6) {
-                            openAccessibilitySettings();
+                            requestAdmin();
                         } else if (which == 7) {
+                            openAccessibilitySettings();
+                        } else if (which == 8) {
                             startUpdate();
                         } else {
                             finish();
