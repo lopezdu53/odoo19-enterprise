@@ -671,8 +671,13 @@ class TvCalendarController(http.Controller):
                    or lead.partner_name or '')
         email = lead.email_from or (partner.email if partner else '') or ''
         phone = lead.phone or lead.mobile or (partner.phone if partner else '') or ''
-        desc = lead.description or ''
-        desc_text = html2plaintext(desc) if desc else ''
+        # Notas mostradas: campo "Que buscan (wacrm IA)" si existe; si no, la
+        # descripcion clasica del lead.
+        if 'wacrm_ai_summary' in lead._fields:
+            note = lead.wacrm_ai_summary or lead.description or ''
+        else:
+            note = lead.description or ''
+        desc_text = html2plaintext(note) if note else ''
         symbol = (lead.company_currency.symbol
                   if lead.company_currency else '$') or '$'
         initial = (contact or lead.name or '?').strip()[:1].upper()
