@@ -62,6 +62,25 @@
                         <field name="work_paused_datetime"/>
                         <field name="work_reactivated_datetime"/>
                     </group>
+                    <group string="Reportes diarios de avance (foto + texto)">
+                        <field name="report_ids" nolabel="1"
+                               context="{'default_date': context_today().strftime('%Y-%m-%d')}">
+                            <list default_order="date desc"
+                                  decoration-success="state == 'approved'"
+                                  decoration-warning="state == 'postponed'"
+                                  decoration-danger="state == 'rejected'"
+                                  decoration-info="state == 'submitted'">
+                                <field name="date"/>
+                                <field name="name"/>
+                                <field name="user_id"/>
+                                <field name="state" widget="badge"
+                                       decoration-success="state == 'approved'"
+                                       decoration-warning="state == 'postponed'"
+                                       decoration-danger="state == 'rejected'"
+                                       decoration-info="state == 'submitted'"/>
+                            </list>
+                        </field>
+                    </group>
                 </sheet>
                 <chatter/>
             </form>

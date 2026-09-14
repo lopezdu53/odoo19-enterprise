@@ -90,6 +90,11 @@ class TvCalendarProject(models.Model):
     tasks_logistica = _stage_o2m('logistica')
     tasks_instalacion = _stage_o2m('instalacion')
 
+    # Reportes diarios de avance de todo el proyecto (centro de reportes).
+    report_ids = fields.One2many(
+        'tv.calendar.progress', 'project_id', string='Reportes de avance')
+    report_count = fields.Integer(compute='_compute_report_count')
+
     task_done_count = fields.Integer(compute='_compute_dashboard')
     progress = fields.Integer(string='Avance (%)', compute='_compute_dashboard')
     progress_html = fields.Html(
@@ -99,6 +104,11 @@ class TvCalendarProject(models.Model):
     def _compute_task_count(self):
         for prj in self:
             prj.task_count = len(prj.task_ids)
+
+    @api.depends('report_ids')
+    def _compute_report_count(self):
+        for prj in self:
+            prj.report_count = len(prj.report_ids)
 
     @api.depends('task_ids.done', 'task_ids.stage')
     def _compute_dashboard(self):

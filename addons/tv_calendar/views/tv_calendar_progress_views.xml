@@ -1,0 +1,148 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_tv_calendar_progress_form" model="ir.ui.view">
+        <field name="name">tv.calendar.progress.form</field>
+        <field name="model">tv.calendar.progress</field>
+        <field name="arch" type="xml">
+            <form string="Reporte de avance">
+                <header>
+                    <button name="action_submit" type="object" string="Enviar"
+                            class="btn-primary" invisible="state != 'draft'"/>
+                    <button name="action_approve" type="object" string="Aprobar"
+                            class="btn-primary" invisible="state in ('draft', 'approved')"/>
+                    <button name="action_postpone" type="object" string="Posponer"
+                            invisible="state in ('draft', 'postponed')"/>
+                    <button name="action_reject" type="object" string="Rechazar"
+                            invisible="state in ('draft', 'rejected')"/>
+                    <button name="action_reset" type="object" string="Reabrir"
+                            invisible="state == 'draft'"/>
+                    <field name="state" widget="statusbar"
+                           statusbar_visible="draft,submitted,approved"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <label for="name"/>
+                        <h1><field name="name" placeholder="Ej: Se termino el corte de laminas"/></h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="task_id"
+                                   options="{'no_create': True}"/>
+                            <field name="project_id"/>
+                            <field name="stage"/>
+                            <field name="date"/>
+                        </group>
+                        <group>
+                            <field name="user_id"/>
+                            <field name="reviewer_id"/>
+                            <field name="review_date"/>
+                            <field name="review_note"
+                                   placeholder="Motivo de aprobar / posponer / rechazar"/>
+                        </group>
+                    </group>
+                    <group>
+                        <group string="Avance del dia">
+                            <field name="note" nolabel="1"
+                                   placeholder="Describe el trabajo avanzado hoy..."/>
+                        </group>
+                        <group string="Foto">
+                            <field name="image" widget="image" nolabel="1"/>
+                        </group>
+                    </group>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_tv_calendar_progress_list" model="ir.ui.view">
+        <field name="name">tv.calendar.progress.list</field>
+        <field name="model">tv.calendar.progress</field>
+        <field name="arch" type="xml">
+            <list string="Reportes de avance"
+                  decoration-success="state == 'approved'"
+                  decoration-warning="state == 'postponed'"
+                  decoration-danger="state == 'rejected'"
+                  decoration-info="state == 'submitted'">
+                <field name="date"/>
+                <field name="name"/>
+                <field name="project_id"/>
+                <field name="stage"/>
+                <field name="task_id"/>
+                <field name="user_id"/>
+                <field name="state" widget="badge"
+                       decoration-success="state == 'approved'"
+                       decoration-warning="state == 'postponed'"
+                       decoration-danger="state == 'rejected'"
+                       decoration-info="state == 'submitted'"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_tv_calendar_progress_kanban" model="ir.ui.view">
+        <field name="name">tv.calendar.progress.kanban</field>
+        <field name="model">tv.calendar.progress</field>
+        <field name="arch" type="xml">
+            <kanban default_group_by="state" class="o_kanban_small_column">
+                <field name="state"/>
+                <field name="image"/>
+                <templates>
+                    <t t-name="card">
+                        <div style="padding:4px;">
+                            <t t-if="record.image.raw_value">
+                                <img t-att-src="kanban_image('tv.calendar.progress', 'image', record.id.raw_value)"
+                                     style="width:100%;max-height:120px;object-fit:cover;border-radius:6px;margin-bottom:6px;"/>
+                            </t>
+                            <div style="font-weight:800;"><field name="name"/></div>
+                            <div style="opacity:.75;font-size:12px;margin:2px 0;">
+                                <field name="project_id"/> · <field name="stage"/>
+                            </div>
+                            <div style="opacity:.6;font-size:12px;">
+                                <field name="date"/> · <field name="user_id"/>
+                            </div>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <record id="view_tv_calendar_progress_search" model="ir.ui.view">
+        <field name="name">tv.calendar.progress.search</field>
+        <field name="model">tv.calendar.progress</field>
+        <field name="arch" type="xml">
+            <search string="Buscar reportes">
+                <field name="name"/>
+                <field name="project_id"/>
+                <field name="task_id"/>
+                <field name="user_id"/>
+                <filter name="submitted" string="Enviados" domain="[('state', '=', 'submitted')]"/>
+                <filter name="approved" string="Aprobados" domain="[('state', '=', 'approved')]"/>
+                <filter name="postponed" string="Pospuestos" domain="[('state', '=', 'postponed')]"/>
+                <filter name="rejected" string="Rechazados" domain="[('state', '=', 'rejected')]"/>
+                <separator/>
+                <filter name="today" string="Hoy" domain="[('date', '=', context_today().strftime('%Y-%m-%d'))]"/>
+                <filter name="group_state" string="Estado" context="{'group_by': 'state'}"/>
+                <filter name="group_project" string="Proyecto" context="{'group_by': 'project_id'}"/>
+                <filter name="group_stage" string="Fase" context="{'group_by': 'stage'}"/>
+                <filter name="group_date" string="Fecha" context="{'group_by': 'date'}"/>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_tv_calendar_progress" model="ir.actions.act_window">
+        <field name="name">Reportes de avance</field>
+        <field name="res_model">tv.calendar.progress</field>
+        <field name="view_mode">kanban,list,form</field>
+        <field name="search_view_id" ref="view_tv_calendar_progress_search"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Aun no hay reportes de avance</p>
+            <p>Cada dia el operario reporta el avance de una tarea con foto y texto,
+               y aqui se aprueba, pospone o rechaza (estilo embudo).</p>
+        </field>
+    </record>
+
+    <menuitem id="menu_tv_calendar_progress" name="Reportes de avance"
+              parent="menu_tv_calendar_root"
+              action="action_tv_calendar_progress" sequence="12"/>
+</odoo>

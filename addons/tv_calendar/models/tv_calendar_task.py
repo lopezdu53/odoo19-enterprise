@@ -72,6 +72,16 @@ class TvCalendarTask(models.Model):
         help="Se muestra a la derecha de la tarea en la plantilla Mecanizado.")
     done = fields.Boolean(string='Completada', default=False, tracking=True)
 
+    # --- Reportes diarios de avance (centro de reporte por fase) ---
+    report_ids = fields.One2many(
+        'tv.calendar.progress', 'task_id', string='Reportes de avance')
+    report_count = fields.Integer(compute='_compute_report_count')
+
+    @api.depends('report_ids')
+    def _compute_report_count(self):
+        for task in self:
+            task.report_count = len(task.report_ids)
+
     # --- Seguimiento de ejecucion (plantilla Electricos) ---
     work_state = fields.Selection(
         [('assigned', 'Asignada'), ('in_progress', 'En progreso'),
