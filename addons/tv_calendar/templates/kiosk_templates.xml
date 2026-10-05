@@ -230,14 +230,14 @@
                     .plano-bar { flex: 0 0 auto; display: flex; align-items: center; gap: 1vw; background: #0b1f3a;
                         color: #fff; padding: 1vh 1.5vw; }
                     .plano-bar > * + * { margin-left: 1vw; }
-                    .plano-title { font-size: clamp(16px, 1.8vw, 32px); font-weight: 800; margin-right: auto; }
+                    .plano-title { font-size: clamp(16px, 1.8vw, 32px); font-weight: 800; margin-left: auto; }
                     .plano-zbtn { width: 2.2em; height: 2.2em; border: 0; border-radius: 8px; background: #37475f;
                         color: #fff; font-size: clamp(18px, 2vw, 34px); font-weight: 800; cursor: pointer; line-height: 1; }
                     .plano-zlvl { font-size: clamp(14px, 1.5vw, 26px); font-weight: 700; min-width: 3.5em; text-align: center;
                         font-variant-numeric: tabular-nums; }
                     .plano-close { border: 0; border-radius: 8px; background: #c62828; color: #fff; font-weight: 800;
                         font-size: clamp(14px, 1.5vw, 28px); padding: .8vh 1.4vw; cursor: pointer; }
-                    .plano-pages { flex: 1 1 auto; overflow: auto; text-align: center; padding: 2vh 1vw;
+                    .plano-pages { flex: 1 1 auto; min-height: 0; overflow: auto; text-align: center; padding: 2vh 1vw;
                         -webkit-overflow-scrolling: touch; }
                     .plano-pages .plano-canvas { display: block; margin: 0 auto 1.5vh; background: #fff;
                         box-shadow: 0 4px 16px rgba(0,0,0,.4); max-width: none; }
@@ -419,11 +419,11 @@
                         <t t-if="show_plano">
                             <div id="plano-ov" class="plano-ov">
                                 <div class="plano-bar">
-                                    <span class="plano-title">Plano</span>
+                                    <button id="plano-close" class="plano-close">&#10006; Cerrar</button>
                                     <button id="plano-zout" class="plano-zbtn">&#8722;</button>
                                     <span id="plano-zlvl" class="plano-zlvl">100%</span>
                                     <button id="plano-zin" class="plano-zbtn">+</button>
-                                    <button id="plano-close" class="plano-close">&#10006; Cerrar</button>
+                                    <span class="plano-title">Plano</span>
                                 </div>
                                 <div id="plano-pages" class="plano-pages"/>
                             </div>

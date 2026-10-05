@@ -203,11 +203,11 @@
             var pagesEl = document.getElementById("plano-pages");
             var zEl = document.getElementById("plano-zlvl");
             var pdfDoc = null;
-            var scale = 1.3;      // escala base (ajuste comodo en TV)
-            var BASE = 1.3;
+            var baseScale = 1;    // escala que ajusta la pagina al ancho (100%)
+            var scale = 1;
 
             function showZoom() {
-                if (zEl) { zEl.textContent = Math.round((scale / BASE) * 100) + "%"; }
+                if (zEl) { zEl.textContent = Math.round((scale / baseScale) * 100) + "%"; }
             }
             function renderAll() {
                 if (!pdfDoc) { return; }
@@ -231,10 +231,17 @@
             function openPlano(taskId) {
                 planoOv.style.display = "flex";
                 pagesEl.innerHTML = "<div class='plano-load'>Cargando plano...</div>";
-                scale = BASE;
                 pdfjsLib.getDocument("/tv/plano/" + token + "/" + taskId).promise
                     .then(function (doc) {
                         pdfDoc = doc;
+                        return doc.getPage(1);
+                    })
+                    .then(function (page) {
+                        // Ajustar al ancho disponible (mas legible que un % fijo).
+                        var vp1 = page.getViewport({ scale: 1 });
+                        var avail = (pagesEl.clientWidth || 1000) - 24;
+                        baseScale = Math.max(0.2, avail / vp1.width);
+                        scale = baseScale;
                         renderAll();
                     })
                     .catch(function () {
