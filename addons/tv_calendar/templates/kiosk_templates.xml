@@ -272,7 +272,7 @@
                 </style>
             </head>
             <body t-attf-class="theme-#{theme}">
-                <t t-if="template_type in ('operator', 'mecanizado', 'electric')">
+                <t t-if="template_type in ('operator', 'mecanizado', 'electric', 'planos')">
                     <!-- ============ OPERARIO / MECANIZADO / ELECTRICOS ============ -->
                     <header class="tvc-header">
                         <div class="tvc-title">
