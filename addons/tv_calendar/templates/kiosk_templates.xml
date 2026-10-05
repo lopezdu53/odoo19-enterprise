@@ -237,6 +237,9 @@
                         font-variant-numeric: tabular-nums; }
                     .plano-close { border: 0; border-radius: 8px; background: #c62828; color: #fff; font-weight: 800;
                         font-size: clamp(14px, 1.5vw, 28px); padding: .8vh 1.4vw; cursor: pointer; }
+                    .plano-sep { opacity: .4; }
+                    /* Foco visible para navegar con el control remoto (D-pad) */
+                    .plano-bar button:focus { outline: 4px solid #ffd54f; outline-offset: 2px; }
                     .plano-pages { flex: 1 1 auto; min-height: 0; overflow: auto; text-align: center; padding: 2vh 1vw;
                         -webkit-overflow-scrolling: touch; }
                     .plano-pages .plano-canvas { display: block; margin: 0 auto 1.5vh; background: #fff;
@@ -423,6 +426,11 @@
                                     <button id="plano-zout" class="plano-zbtn">&#8722;</button>
                                     <span id="plano-zlvl" class="plano-zlvl">100%</span>
                                     <button id="plano-zin" class="plano-zbtn">+</button>
+                                    <span class="plano-sep">|</span>
+                                    <button id="plano-up" class="plano-zbtn">&#9650;</button>
+                                    <button id="plano-down" class="plano-zbtn">&#9660;</button>
+                                    <button id="plano-left" class="plano-zbtn">&#9664;</button>
+                                    <button id="plano-right" class="plano-zbtn">&#9654;</button>
                                     <span class="plano-title">Plano</span>
                                 </div>
                                 <div id="plano-pages" class="plano-pages"/>

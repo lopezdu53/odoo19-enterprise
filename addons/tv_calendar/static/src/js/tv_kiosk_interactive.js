@@ -243,6 +243,9 @@
                         baseScale = Math.max(0.2, avail / vp1.width);
                         scale = baseScale;
                         renderAll();
+                        // Dar foco a un boton para poder navegar con el control remoto.
+                        var d = document.getElementById("plano-down");
+                        if (d) { d.focus(); }
                     })
                     .catch(function () {
                         pagesEl.innerHTML = "<div class='plano-load'>No se pudo abrir el plano.</div>";
@@ -253,12 +256,28 @@
                 pagesEl.innerHTML = "";
                 pdfDoc = null;
             }
+            function scrollPages(dx, dy) {
+                pagesEl.scrollLeft += dx;
+                pagesEl.scrollTop += dy;
+            }
             document.getElementById("plano-close").addEventListener("click", closePlano);
             document.getElementById("plano-zin").addEventListener("click", function () {
-                scale = Math.min(6, scale + 0.3); renderAll();
+                scale = Math.min(6 * baseScale, scale + 0.3 * baseScale); renderAll();
             });
             document.getElementById("plano-zout").addEventListener("click", function () {
-                scale = Math.max(0.4, scale - 0.3); renderAll();
+                scale = Math.max(0.3 * baseScale, scale - 0.3 * baseScale); renderAll();
+            });
+            document.getElementById("plano-up").addEventListener("click", function () {
+                scrollPages(0, -pagesEl.clientHeight * 0.85);
+            });
+            document.getElementById("plano-down").addEventListener("click", function () {
+                scrollPages(0, pagesEl.clientHeight * 0.85);
+            });
+            document.getElementById("plano-left").addEventListener("click", function () {
+                scrollPages(-pagesEl.clientWidth * 0.85, 0);
+            });
+            document.getElementById("plano-right").addEventListener("click", function () {
+                scrollPages(pagesEl.clientWidth * 0.85, 0);
             });
             Array.prototype.forEach.call(document.querySelectorAll(".plano-btn"), function (b) {
                 b.addEventListener("click", function () {
