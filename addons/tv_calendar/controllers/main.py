@@ -1,3 +1,4 @@
+import base64
 import calendar
 import json
 import re
@@ -76,13 +77,15 @@ class TvCalendarController(http.Controller):
             common.update(self._projects_values(board, today))
             return self._render(board, 'tv_calendar.kiosk_projects', common)
 
-        if board.template_type in ('operator', 'mecanizado', 'electric'):
+        if board.template_type in ('operator', 'mecanizado', 'electric', 'planos'):
             is_electric = board.template_type == 'electric'
-            is_mecan = board.template_type == 'mecanizado' or is_electric
+            is_planos = board.template_type == 'planos'
+            is_mecan = board.template_type == 'mecanizado' or is_electric or is_planos
             common.update({
                 'is_mecan': is_mecan,
                 'show_images': is_mecan,
                 'interactive': is_electric,
+                'show_plano': is_planos,
                 'access_token': board.access_token,
                 'operator_name': board.operator_display or '',
                 'epp_message': board.epp_message or '',
@@ -384,6 +387,7 @@ class TvCalendarController(http.Controller):
             'created_ts': created_ts,
             'boards': boards,
             'image': image,
+            'has_plano': task.has_plano,
         }
 
     @staticmethod
@@ -857,6 +861,28 @@ class TvCalendarController(http.Controller):
             'commands': dev.pop_commands(),
             'screen': self._screen_state(board),
         })
+
+    @http.route('/tv/plano/<string:access_token>/<int:task_id>', type='http',
+                auth='public', sitemap=False)
+    def tv_plano(self, access_token, task_id, **kw):
+        """Sirve el PDF del plano de una tarea (validado por el token del tablero)."""
+        board = self._board_by_token(access_token)
+        if not board:
+            return request.not_found()
+        task = request.env['tv.calendar.task'].sudo().browse(task_id)
+        if not task.exists() or not task.plano_pdf:
+            return request.not_found()
+        try:
+            data = base64.b64decode(task.plano_pdf)
+        except Exception:
+            return request.not_found()
+        filename = (task.plano_filename or 'plano.pdf').replace('"', '')
+        return request.make_response(data, headers=[
+            ('Content-Type', 'application/pdf'),
+            ('Content-Disposition', "inline; filename=\"%s\"" % filename),
+            ('Content-Length', str(len(data))),
+            ('Cache-Control', 'public, max-age=3600'),
+        ])
 
     @http.route('/tv/ctrl/cmd', type='http', auth='user', csrf=False,
                 methods=['POST'], sitemap=False)

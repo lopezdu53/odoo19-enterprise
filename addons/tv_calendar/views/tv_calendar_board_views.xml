@@ -28,7 +28,7 @@
                             icon="fa-refresh"/>
                     <button name="action_load_standard_schedule" type="object"
                             string="Cargar horario estandar" icon="fa-clock-o"
-                            invisible="template_type not in ('operator', 'mecanizado', 'electric', 'component_orders')"/>
+                            invisible="template_type not in ('operator', 'mecanizado', 'electric', 'component_orders', 'planos')"/>
                 </header>
                 <sheet>
                     <div class="oe_button_box" name="button_box">
@@ -81,7 +81,7 @@
                     </group>
 
                     <!-- Operario -->
-                    <group invisible="template_type not in ('operator', 'mecanizado', 'electric', 'component_orders')">
+                    <group invisible="template_type not in ('operator', 'mecanizado', 'electric', 'component_orders', 'planos')">
                         <group string="Operario">
                             <field name="employee_id"/>
                             <field name="operator_name"/>
@@ -98,7 +98,7 @@
                         </group>
                     </group>
                     <group string="Horario del turno"
-                           invisible="template_type not in ('operator', 'mecanizado', 'electric', 'component_orders')">
+                           invisible="template_type not in ('operator', 'mecanizado', 'electric', 'component_orders', 'planos')">
                         <field name="time_slot_ids" nolabel="1">
                             <list editable="bottom">
                                 <field name="sequence" widget="handle"/>

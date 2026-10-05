@@ -221,6 +221,28 @@
                     .et-comp-d { font-weight: 700; opacity: .82; }
                     .et-comp-d.ok { color: #a5d6a7; opacity: 1; }
 
+                    /* Planos: boton "Ver plano" + visor PDF a pantalla completa */
+                    .plano-btn { margin-top: .5vh; align-self: flex-start; background: #0b57d0; color: #fff; border: 0;
+                        border-radius: 8px; font-weight: 800; font-size: clamp(13px, 1.4vw, 28px);
+                        padding: .7vh 1.2vw; cursor: pointer; }
+                    .plano-ov { display: none; position: fixed; inset: 0; z-index: 1000; background: #1a1f29;
+                        flex-direction: column; }
+                    .plano-bar { flex: 0 0 auto; display: flex; align-items: center; gap: 1vw; background: #0b1f3a;
+                        color: #fff; padding: 1vh 1.5vw; }
+                    .plano-bar > * + * { margin-left: 1vw; }
+                    .plano-title { font-size: clamp(16px, 1.8vw, 32px); font-weight: 800; margin-right: auto; }
+                    .plano-zbtn { width: 2.2em; height: 2.2em; border: 0; border-radius: 8px; background: #37475f;
+                        color: #fff; font-size: clamp(18px, 2vw, 34px); font-weight: 800; cursor: pointer; line-height: 1; }
+                    .plano-zlvl { font-size: clamp(14px, 1.5vw, 26px); font-weight: 700; min-width: 3.5em; text-align: center;
+                        font-variant-numeric: tabular-nums; }
+                    .plano-close { border: 0; border-radius: 8px; background: #c62828; color: #fff; font-weight: 800;
+                        font-size: clamp(14px, 1.5vw, 28px); padding: .8vh 1.4vw; cursor: pointer; }
+                    .plano-pages { flex: 1 1 auto; overflow: auto; text-align: center; padding: 2vh 1vw;
+                        -webkit-overflow-scrolling: touch; }
+                    .plano-pages .plano-canvas { display: block; margin: 0 auto 1.5vh; background: #fff;
+                        box-shadow: 0 4px 16px rgba(0,0,0,.4); max-width: none; }
+                    .plano-load { color: #cfd8e3; font-size: clamp(16px, 1.8vw, 30px); padding: 6vh 2vw; font-weight: 700; }
+
                     /* ===== Compatibilidad WebView viejo (onn): el "gap" de flexbox
                        no existe antes de Chromium 84, por eso los textos se
                        amontonaban. Lo sustituimos por margenes equivalentes. ===== */
@@ -279,6 +301,9 @@
                                             <div class="bt-name" t-esc="task['name']"/>
                                             <t t-if="task['description_text']">
                                                 <div class="bt-desc" t-out="task['description_html']"/>
+                                            </t>
+                                            <t t-if="show_plano and task['has_plano']">
+                                                <button class="plano-btn" t-att-data-plano="task['id']">&#128208; Ver plano</button>
                                             </t>
                                             <t t-if="interactive">
                                                 <div class="et-panel">
@@ -371,22 +396,39 @@
                             </div>
                         </div>
                     </div>
-                    <t t-if="interactive">
-                        <span id="tvc-data" t-att-data-token="access_token" style="display:none"/>
-                        <div id="req-modal" class="req-modal">
-                            <div class="req-box">
-                                <div class="req-title">Solicitar componente</div>
-                                <label>Categoria</label>
-                                <select id="req-cat"/>
-                                <label>Producto</label>
-                                <select id="req-prod"/>
-                                <div id="req-msg"/>
-                                <div class="req-actions">
-                                    <button id="req-cancel">Cancelar</button>
-                                    <button id="req-send">Pedir</button>
+                    <t t-if="interactive or show_plano">
+                        <span id="tvc-data" t-att-data-token="access_token"
+                              data-worker="/tv_calendar/static/src/lib/pdfjs/pdf.worker.min.js"
+                              style="display:none"/>
+                        <t t-if="interactive">
+                            <div id="req-modal" class="req-modal">
+                                <div class="req-box">
+                                    <div class="req-title">Solicitar componente</div>
+                                    <label>Categoria</label>
+                                    <select id="req-cat"/>
+                                    <label>Producto</label>
+                                    <select id="req-prod"/>
+                                    <div id="req-msg"/>
+                                    <div class="req-actions">
+                                        <button id="req-cancel">Cancelar</button>
+                                        <button id="req-send">Pedir</button>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
+                        </t>
+                        <t t-if="show_plano">
+                            <div id="plano-ov" class="plano-ov">
+                                <div class="plano-bar">
+                                    <span class="plano-title">Plano</span>
+                                    <button id="plano-zout" class="plano-zbtn">&#8722;</button>
+                                    <span id="plano-zlvl" class="plano-zlvl">100%</span>
+                                    <button id="plano-zin" class="plano-zbtn">+</button>
+                                    <button id="plano-close" class="plano-close">&#10006; Cerrar</button>
+                                </div>
+                                <div id="plano-pages" class="plano-pages"/>
+                            </div>
+                            <script type="text/javascript" src="/tv_calendar/static/src/lib/pdfjs/pdf.min.js"/>
+                        </t>
                         <script type="text/javascript" t-attf-src="/tv_calendar/static/src/js/tv_kiosk_interactive.js?v=#{asset_v}"/>
                     </t>
                 </t>

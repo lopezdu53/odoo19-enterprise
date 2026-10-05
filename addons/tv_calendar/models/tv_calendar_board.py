@@ -46,6 +46,7 @@ class TvCalendarBoard(models.Model):
             ('mecanizado', 'Mecanizado'),
             ('electric', 'Electricos con Inventario'),
             ('component_orders', 'Pedidos de Componentes'),
+            ('planos', 'Planos (tareas con PDF)'),
             ('ventas', 'Ventas (CRM)'),
             ('ad', 'Publicidad'),
         ],

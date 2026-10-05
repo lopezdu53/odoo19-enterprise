@@ -192,5 +192,72 @@
                 });
             });
         }
+
+        // 5) Visor de planos PDF (plantilla Planos).
+        var planoOv = document.getElementById("plano-ov");
+        if (planoOv && token && window.pdfjsLib) {
+            var workerSrc = dataEl ? dataEl.getAttribute("data-worker") : "";
+            if (workerSrc) {
+                pdfjsLib.GlobalWorkerOptions.workerSrc = workerSrc;
+            }
+            var pagesEl = document.getElementById("plano-pages");
+            var zEl = document.getElementById("plano-zlvl");
+            var pdfDoc = null;
+            var scale = 1.3;      // escala base (ajuste comodo en TV)
+            var BASE = 1.3;
+
+            function showZoom() {
+                if (zEl) { zEl.textContent = Math.round((scale / BASE) * 100) + "%"; }
+            }
+            function renderAll() {
+                if (!pdfDoc) { return; }
+                pagesEl.innerHTML = "";
+                showZoom();
+                for (var i = 1; i <= pdfDoc.numPages; i++) {
+                    renderPage(i);
+                }
+            }
+            function renderPage(num) {
+                pdfDoc.getPage(num).then(function (page) {
+                    var vp = page.getViewport({ scale: scale });
+                    var canvas = document.createElement("canvas");
+                    canvas.className = "plano-canvas";
+                    canvas.width = vp.width;
+                    canvas.height = vp.height;
+                    pagesEl.appendChild(canvas);
+                    page.render({ canvasContext: canvas.getContext("2d"), viewport: vp });
+                });
+            }
+            function openPlano(taskId) {
+                planoOv.style.display = "flex";
+                pagesEl.innerHTML = "<div class='plano-load'>Cargando plano...</div>";
+                scale = BASE;
+                pdfjsLib.getDocument("/tv/plano/" + token + "/" + taskId).promise
+                    .then(function (doc) {
+                        pdfDoc = doc;
+                        renderAll();
+                    })
+                    .catch(function () {
+                        pagesEl.innerHTML = "<div class='plano-load'>No se pudo abrir el plano.</div>";
+                    });
+            }
+            function closePlano() {
+                planoOv.style.display = "none";
+                pagesEl.innerHTML = "";
+                pdfDoc = null;
+            }
+            document.getElementById("plano-close").addEventListener("click", closePlano);
+            document.getElementById("plano-zin").addEventListener("click", function () {
+                scale = Math.min(6, scale + 0.3); renderAll();
+            });
+            document.getElementById("plano-zout").addEventListener("click", function () {
+                scale = Math.max(0.4, scale - 0.3); renderAll();
+            });
+            Array.prototype.forEach.call(document.querySelectorAll(".plano-btn"), function (b) {
+                b.addEventListener("click", function () {
+                    openPlano(b.getAttribute("data-plano"));
+                });
+            });
+        }
     });
 })();

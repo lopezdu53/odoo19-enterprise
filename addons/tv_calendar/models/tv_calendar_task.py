@@ -70,7 +70,19 @@ class TvCalendarTask(models.Model):
     reference_image = fields.Image(
         string='Imagen de referencia', max_width=1280, max_height=1280,
         help="Se muestra a la derecha de la tarea en la plantilla Mecanizado.")
+    plano_pdf = fields.Binary(
+        string='Plano (PDF)', attachment=True,
+        help="Plano en PDF. En la plantilla Planos aparece el boton 'Ver plano' "
+             "para abrirlo a pantalla completa con zoom.")
+    plano_filename = fields.Char(string='Nombre del plano')
+    has_plano = fields.Boolean(
+        string='Tiene plano', compute='_compute_has_plano', store=True)
     done = fields.Boolean(string='Completada', default=False, tracking=True)
+
+    @api.depends('plano_pdf')
+    def _compute_has_plano(self):
+        for task in self:
+            task.has_plano = bool(task.plano_pdf)
 
     # --- Reportes diarios de avance (centro de reporte por fase) ---
     report_ids = fields.One2many(
